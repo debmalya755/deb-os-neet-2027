@@ -285,6 +285,38 @@
 
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   .chapter-card{animation:fadeUp .35s var(--ease) backwards}
+
+  /* ---------- Task-creation modal (subject-locked) ---------- */
+  .fab-add{position:fixed;bottom:28px;right:28px;z-index:80;padding:14px 22px;background:linear-gradient(180deg,var(--accent-warm),rgba(0,200,212,.9));color:#001a20;border:none;border-radius:99px;font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 28px rgba(0,245,255,.35),0 2px 6px rgba(0,0,0,.4);display:inline-flex;align-items:center;gap:8px;transition:transform .28s var(--ease),box-shadow .28s var(--ease)}
+  .fab-add:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,245,255,.5),0 3px 8px rgba(0,0,0,.5)}
+  .fab-add .fab-plus{font-size:22px;line-height:1;font-weight:400}
+  .modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+  .modal-backdrop.open{opacity:1;pointer-events:auto}
+  .modal{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;width:100%;max-width:480px;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 40px rgba(0,245,255,.12);transform:scale(.96);opacity:0;transition:transform .3s var(--ease),opacity .3s var(--ease);overflow:hidden}
+  .modal-backdrop.open .modal{transform:scale(1);opacity:1}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--divider)}
+  .modal-head h3{margin:0;font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:.03em;color:var(--ink-primary)}
+  .modal-close{background:transparent;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;color:var(--ink-dim);font-size:18px;line-height:1;cursor:pointer;transition:all .2s var(--ease)}
+  .modal-close:hover{color:var(--accent-warm);border-color:var(--border-strong);background:var(--field-bg-active)}
+  #taskForm{padding:20px 22px 16px;display:flex;flex-direction:column;gap:14px}
+  .form-row{display:flex;flex-direction:column;gap:5px}
+  .form-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  #taskForm input,#taskForm select{background:var(--field-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--font-body);font-size:14px;color:var(--ink-primary);outline:none;transition:border-color .2s var(--ease),background .2s var(--ease)}
+  #taskForm input:focus,#taskForm select:focus{border-color:var(--border-strong);background:var(--field-bg-active)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .form-err{color:var(--accent-red);font-size:12px;min-height:16px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:4px 0 0}
+  .modal-btn{padding:10px 18px;border:1px solid;border-radius:8px;font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .22s var(--ease)}
+  .modal-btn.ghost{background:transparent;border-color:var(--border);color:var(--ink-dim)}
+  .modal-btn.ghost:hover{border-color:var(--border-strong);color:var(--ink-primary);background:var(--field-bg-active)}
+  .modal-btn.primary{background:linear-gradient(180deg,var(--accent-warm),rgba(0,200,212,.9));border-color:rgba(120,240,255,.55);color:#001a20;box-shadow:0 4px 14px rgba(0,245,255,.3)}
+  .modal-btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,245,255,.45)}
+  .modal-foot{padding:12px 22px 16px;border-top:1px solid var(--divider);font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;color:var(--ink-faint);text-transform:uppercase}
+  .modal-foot strong{color:var(--accent-warm);font-weight:500}
+  .toast{position:fixed;bottom:100px;right:28px;z-index:110;padding:12px 20px;background:rgba(0,245,255,.12);border:1px solid var(--border-strong);border-radius:10px;color:var(--accent-warm);font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.06em;box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 20px rgba(0,245,255,.2);opacity:0;transform:translateY(10px);transition:opacity .3s var(--ease),transform .3s var(--ease);pointer-events:none}
+  .toast.on{opacity:1;transform:translateY(0)}
+  @media (max-width:640px){.fab-add{bottom:20px;right:20px;padding:12px 18px;font-size:13px}.form-grid{grid-template-columns:1fr;gap:10px}}
+
 </style>
 </head>
 <body>
@@ -755,7 +787,109 @@
     }
   });
 
+
+  // ---------- Task creation (subject-locked to Biology) ----------
+  (function(){
+    var SUBJECT = 'Biology';
+    var CHAPTERS = BOTANY.concat(ZOOLOGY);
+    var backdrop = document.getElementById('modalBackdrop');
+    if (!backdrop) return;
+    var openBtn = document.getElementById('addTaskBtn');
+    var closeBtn = document.getElementById('modalClose');
+    var cancelBtn = document.getElementById('cancelBtn');
+    var form = document.getElementById('taskForm');
+    var fName = document.getElementById('fName');
+    var fChapter = document.getElementById('fChapter');
+    var fUnit = document.getElementById('fUnit');
+    var fMin = document.getElementById('fMin');
+    var fDeadline = document.getElementById('fDeadline');
+    var formErr = document.getElementById('formErr');
+    var toast = document.getElementById('toast');
+    fChapter.innerHTML = '<option value="">-- select chapter --</option>' + CHAPTERS.map(function(c){
+      var n = c.name.replace(/"/g,'&quot;');
+      return '<option value="'+n+'">'+c.name+'</option>';
+    }).join('');
+    fDeadline.value = (new Date()).toISOString().slice(0,10);
+    function openModal(){ backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden','false'); setTimeout(function(){ fName.focus(); },100); }
+    function closeModal(){ backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden','true'); form.reset(); formErr.textContent=''; fDeadline.value = (new Date()).toISOString().slice(0,10); }
+    function showToast(msg){ toast.textContent = msg; toast.classList.add('on'); setTimeout(function(){ toast.classList.remove('on'); }, 2100); }
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', function(e){ if (e.target === backdrop) closeModal(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      formErr.textContent = '';
+      var name = fName.value.trim();
+      var chapter = fChapter.value.trim();
+      var min = parseInt(fMin.value, 10);
+      var deadline = fDeadline.value || (new Date()).toISOString().slice(0,10);
+      if (!name){ formErr.textContent='Task name is required.'; fName.focus(); return; }
+      if (!chapter){ formErr.textContent='Please pick a chapter.'; fChapter.focus(); return; }
+      if (!min || min < 5){ formErr.textContent='Timer must be at least 5 minutes.'; fMin.focus(); return; }
+      var day = (new Date()).toISOString().slice(0,10);
+      var key = 'debos.tasks.' + day;
+      var tasks = [];
+      try{ tasks = JSON.parse(localStorage.getItem(key) || '[]'); }catch(_){}
+      tasks.push({
+        id: 'tsk-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        name: name, unit: fUnit.value, subject: SUBJECT, topic: chapter,
+        assignedMin: min, actualMin: 0, status: 'not-started',
+        blowout: false, startedAt: 0, deadline: deadline, completedAt: null
+      });
+      localStorage.setItem(key, JSON.stringify(tasks));
+      closeModal();
+      showToast('Task added -- see Command dashboard');
+    });
+  })();
+
 })();
 </script>
+
+<!-- Task creation UI (subject-locked) -->
+<button class="fab-add" id="addTaskBtn" type="button" aria-label="Plan a new Biology task">
+  <span class="fab-plus">+</span> New task
+</button>
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle">New Biology task</h3>
+      <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <form id="taskForm" novalidate>
+      <label class="form-row">
+        <span class="form-label">Task name</span>
+        <input id="fName" type="text" placeholder="e.g. Chapter X &mdash; DPP Set 3" required>
+      </label>
+      <label class="form-row">
+        <span class="form-label">Chapter</span>
+        <select id="fChapter" required></select>
+      </label>
+      <div class="form-grid">
+        <label class="form-row">
+          <span class="form-label">Unit type</span>
+          <select id="fUnit"><option value="Lecture">Lecture</option><option value="Single DPP">Single DPP</option><option value="PYQ-50">PYQ-50</option></select>
+        </label>
+        <label class="form-row">
+          <span class="form-label">Timer (min)</span>
+          <input id="fMin" type="number" min="5" max="240" value="45" required>
+        </label>
+        <label class="form-row">
+          <span class="form-label">Deadline</span>
+          <input id="fDeadline" type="date">
+        </label>
+      </div>
+      <div class="form-err" id="formErr"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="modal-btn primary">Plan task</button>
+      </div>
+    </form>
+    <div class="modal-foot">Subject locked to <strong>Biology</strong> &mdash; created tasks appear on the Command dashboard.</div>
+  </div>
+</div>
+<div class="toast" id="toast" aria-live="polite">Task added</div>
+
 </body>
 </html>

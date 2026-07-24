@@ -478,6 +478,21 @@
   .subj-bar .val{font-family:var(--font-mono);font-size:12px;color:var(--ink-dim);text-align:right;font-variant-numeric:tabular-nums}
 
   /* ---------- Task table ---------- */
+  /* Empty state — visible when no tasks have been planned for today */
+  .task-empty{
+    padding:44px 32px;
+    border:1px dashed var(--panel-border);
+    border-radius:14px;
+    background:linear-gradient(180deg,rgba(0,245,255,.02),transparent);
+    text-align:center;
+    display:flex;flex-direction:column;gap:10px;align-items:center;
+  }
+  .task-empty-icon{font-size:34px;opacity:.85;line-height:1;filter:drop-shadow(0 0 12px rgba(0,245,255,.25))}
+  .task-empty-title{font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--ink-primary);letter-spacing:.02em}
+  .task-empty-hint{font-family:var(--font-body);font-size:13px;color:var(--ink-dim);max-width:440px;line-height:1.5}
+  .task-empty-cta{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+  .task-empty-cta .subj-pill{padding:6px 14px;font-size:11px;letter-spacing:.22em;cursor:pointer;transition:transform .22s var(--ease),box-shadow .22s var(--ease)}
+  .task-empty-cta .subj-pill:hover{transform:translateY(-2px);box-shadow:0 0 18px rgba(0,245,255,.25)}
   .task-table-wrap{overflow-x:auto;border:1px solid var(--panel-border);border-radius:14px;padding:6px 8px;background:linear-gradient(180deg,rgba(0,245,255,.015),transparent)}
   .task-table{width:100%;border-collapse:collapse;font-size:13.5px}
   .task-table th,.task-table td{padding:14px 14px;text-align:left;border:none;vertical-align:middle;white-space:nowrap}
@@ -1416,24 +1431,35 @@
   })();
 
   // ---------- Sample data (seeded once, editable via localStorage) ----------
-  var SAMPLE_TASKS = [
-    { id:'t1', name:'Chemical Bonding &mdash; Lecture 7', unit:'Lecture', subject:'Chemistry', topic:'Chemical Bonding', assignedMin:55, actualMin:28, status:'in-progress', blowout:false, startedAt: Date.now() - 28*60*1000, deadline: todayISO, completedAt: null },
-    { id:'t2', name:'Human Reproduction &mdash; PYQ-50 Set 3', unit:'PYQ-50', subject:'Biology', topic:'Human Reproduction', assignedMin:75, actualMin:0, status:'not-started', blowout:false, startedAt:0, deadline: todayISO, completedAt: null },
-    { id:'t3', name:'Kinematics DPP &mdash; Set 12', unit:'Single DPP', subject:'Physics', topic:'Motion in 1D', assignedMin:45, actualMin:12, status:'paused', blowout:false, startedAt:0, deadline: todayISO, completedAt: null },
-    { id:'t4', name:'Thermodynamics Revision', unit:'Lecture', subject:'Physics', topic:'Thermodynamics', assignedMin:40, actualMin:52, status:'completed', blowout:true, startedAt:0, deadline: shiftDays(todayISO,-1), completedAt: todayISO },
-    { id:'t5', name:'Cell Biology Notes Review', unit:'Single DPP', subject:'Biology', topic:'Cell Structure', assignedMin:30, actualMin:28, status:'completed', blowout:false, startedAt:0, deadline: todayISO, completedAt: todayISO }
-  ];
+  // Task list starts EMPTY. Tasks can only be created from a subject page
+  // (physics.html / chemistry.html / biology.html) — the subject dashboard
+  // owns its own chapter list and locks the subject field automatically.
   var tasksKey='debos.tasks.'+todayISO;
-  var tasks = LS.getJSON(tasksKey, null) || SAMPLE_TASKS;
+  var tasks = LS.getJSON(tasksKey, null) || [];
   LS.setJSON(tasksKey, tasks);
 
-  var SAMPLE_CARRYOVER = [{ name:'Coordinate Geometry &mdash; DPP Set 8', subject:'Physics', reason:'Blown out &mdash; needs concept revision' }];
-  var carryover = LS.getJSON('debos.carryover.'+todayISO, SAMPLE_CARRYOVER);
+  // Carry-over also starts empty. Populated organically by yesterday's incomplete work.
+  var carryover = LS.getJSON('debos.carryover.'+todayISO, []);
 
   // ---------- Render tasks (borderless table) ----------
   var subjCls = { Physics:'physics', Chemistry:'chemistry', Biology:'biology' };
   function renderTasks(){
     var list = $('taskList');
+    // Empty state — tasks can only be planned from within a subject page
+    if (!tasks.length){
+      list.innerHTML =
+        '<div class="task-empty">'+
+          '<div class="task-empty-icon">&#128218;</div>'+
+          '<div class="task-empty-title">No tasks planned yet</div>'+
+          '<div class="task-empty-hint">Open a subject to add one &mdash; the subject page owns the chapter list and locks the tag automatically.</div>'+
+          '<div class="task-empty-cta">'+
+            '<a href="physics.html" class="subj-pill physics">Physics</a>'+
+            '<a href="chemistry.html" class="subj-pill chemistry">Chemistry</a>'+
+            '<a href="biology.html" class="subj-pill biology">Biology</a>'+
+          '</div>'+
+        '</div>';
+      return;
+    }
     list.innerHTML =
       '<div class="task-table-wrap">' +
         '<table class="task-table">' +
