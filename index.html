@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<!--
+  ==========================================================================
+  DEB OS - LANDING PAGE (index.html)
+  ==========================================================================
+  This is the "threshold" file - the one page allowed to look different.
+  Every other page (command / physics / chemistry / biology / focus /
+  weekly / monthly) will share a common shell.
+
+  SHELL HANDOFF CONTRACT
+  ----------------------
+  All shared state moves through Web Storage. When you build command.html
+  and the rest, use these exact keys so navigation feels seamless.
+
+    localStorage (persists across sessions)
+      debos.theme              -> 'dark' | 'light'
+      debos.pin                -> 6-digit string
+      debos.recovery.names     -> JSON array of 5 strings
+      debos.pin.attempts       -> number of wrong tries this cycle
+      debos.pin.lockoutUntil   -> ms timestamp when lockout ends
+      debos.audio              -> 'on' | 'off' (visual preference only)
+      debos.streak             -> integer, task-completion streak
+
+    sessionStorage (dies with the tab)
+      debos.intro.crossed      -> '1' if the black-hole intro has been played
+      debos.session.unlocked   -> '1' if PIN was entered correctly this session
+
+  Every page after this one must:
+    1. Read debos.theme on load and apply data-theme to <html>
+    2. Verify debos.session.unlocked === '1' or redirect back to index.html
+    3. Use the same font imports (Space Grotesk / Instrument Serif / IBM Plex Mono)
+
+  When ready, extract the CSS tokens block + PIN modal + HUD chrome + audio
+  code into /assets/shell.css and /assets/shell.js so every page includes them
+  as <link> and <script> instead of copying.
+  ==========================================================================
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="DEB OS &mdash; Captain&rsquo;s personal NEET 2027 command center. Oh Captain! My Captain! It&rsquo;s time for 720.">
+<meta name="color-scheme" content="dark light">
+<meta property="og:title" content="DEB OS">
+<meta property="og:description" content="Oh Captain! My Captain! It&rsquo;s time for 720.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#020104">
+<title>DEB OS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='.6' stop-color='%23000'/%3E%3Cstop offset='.72' stop-color='%23ffb454'/%3E%3Cstop offset='.88' stop-color='%23f0871e'/%3E%3Cstop offset='1' stop-color='%23020104'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' fill='%23020104'/%3E%3Ccircle cx='32' cy='32' r='24' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Cross-document view transitions (Chromium 126+) ---------- */
+  @view-transition{ navigation: auto; }
+  ::view-transition-old(root),
+  ::view-transition-new(root){ animation-duration: .5s; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+
+  /* ---------- Design tokens ---------- */
+  :root{
+    --ease: cubic-bezier(.22,1,.36,1);
+    --ease-soft: cubic-bezier(.4,0,.2,1);
+
+    --font-body: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+    --accent-warm: #ffb454;
+    --accent-warm-2: #f0871e;
+    --accent-glow: rgba(240,135,30,.45);
+    --accent-claude: #d97757;
+    --accent-grok: #d2d6e1;
+
+    --focus: rgba(255,180,84,.85);
+  }
+  html[data-theme="dark"]{
+    --bg-deep: #020104;
+    --bg-mid: #070409;
+    --bg-warm: #15100b;
+    --panel: linear-gradient(180deg,rgba(28,20,14,.96),rgba(14,9,6,.96));
+    --panel-border: rgba(255,180,90,.28);
+    --panel-shadow: 0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,210,150,.12);
+    --ink-primary: #fff6e8;
+    --ink-warm: #ecd9bf;
+    --ink-dim: #c99a63;
+    --ink-faint: #8a6f4c;
+    --sub: #b99a78;
+    --border: rgba(255,210,150,.22);
+    --border-strong: rgba(255,180,84,.6);
+    --field-bg: rgba(255,255,255,.03);
+    --field-bg-active: rgba(255,180,84,.10);
+    --key-bg: rgba(255,255,255,.04);
+    --key-hover: rgba(255,180,84,.16);
+    --error: #ff9575;
+  }
+  html[data-theme="light"]{
+    --bg-deep: #f3ede2;
+    --bg-mid: #ede4d2;
+    --bg-warm: #f7f0e2;
+    --panel: linear-gradient(180deg,#fffaf1,#f5ecdc);
+    --panel-border: rgba(160,110,45,.28);
+    --panel-shadow: 0 30px 60px rgba(80,50,20,.12),inset 0 1px 0 rgba(255,255,255,.7);
+    --ink-primary: #2a1a08;
+    --ink-warm: #4a2f14;
+    --ink-dim: #8a5a20;
+    --ink-faint: #a67e4a;
+    --sub: #6a4c25;
+    --border: rgba(120,80,30,.24);
+    --border-strong: rgba(240,135,30,.7);
+    --field-bg: rgba(120,80,30,.05);
+    --field-bg-active: rgba(240,135,30,.14);
+    --key-bg: rgba(120,80,30,.06);
+    --key-hover: rgba(240,135,30,.18);
+    --error: #b23a1a;
+  }
+
+  /* ---------- Reset / base ---------- */
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg-deep);overflow:hidden;font-family:var(--font-body);color:var(--ink-primary);-webkit-font-smoothing:antialiased}
+  body{transition: background .5s var(--ease-soft), color .5s var(--ease-soft)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+  /* Focus visibility for keyboard users */
+  :focus{outline:none}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:8px}
+
+  @keyframes pulseHint{0%,100%{opacity:.35}50%{opacity:.9}}
+  @keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ---------- Stage & canvases ---------- */
+  .stage{position:fixed;inset:0;background:radial-gradient(ellipse 120% 90% at 50% 48%, var(--bg-warm) 0%, var(--bg-mid) 52%, var(--bg-deep) 100%);overflow:hidden}
+  #bh{position:absolute;inset:0;width:100%;height:100%;display:block;will-change:opacity;z-index:1}
+  #ambient{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease);z-index:3}
+  .overlay-backdrop{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 50%, rgba(8,4,2,.5) 0%, rgba(3,2,6,.85) 70%);opacity:0;transition:opacity 1.2s var(--ease);pointer-events:none;z-index:2}
+  html[data-theme="light"] .overlay-backdrop{background:radial-gradient(ellipse 90% 70% at 50% 50%, rgba(255,240,220,.4) 0%, rgba(243,237,226,.85) 70%)}
+
+  /* Big invisible tap zone during intro */
+  .tap-zone{position:absolute;inset:0;z-index:4;cursor:pointer;background:transparent}
+  .tap-zone.gone{display:none}
+
+  /* ---------- HUD (clock, countdowns, controls) ---------- */
+  .hud{position:absolute;z-index:5;display:flex;gap:26px;align-items:center;font-family:var(--font-mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);opacity:.85;transition:opacity .4s var(--ease)}
+  .hud:hover{opacity:1}
+  .hud-left{top:26px;left:30px;flex-direction:column;align-items:flex-start;gap:8px}
+  .hud-right{top:26px;right:30px;gap:22px}
+  .hud .clock{font-size:24px;color:var(--ink-warm);letter-spacing:.05em;text-transform:none;font-variant-numeric:tabular-nums;font-weight:400;line-height:1}
+  .hud .date{font-size:13px;color:var(--ink-dim);letter-spacing:.12em;font-weight:400}
+  .hud .countdown{display:flex;flex-direction:column;text-align:right;gap:3px}
+  .hud .countdown .n{font-size:20px;color:var(--ink-warm);letter-spacing:.02em;font-variant-numeric:tabular-nums;text-transform:none;font-weight:400;line-height:1}
+  .hud .countdown .l{font-size:11px;color:var(--ink-faint);letter-spacing:.16em}
+  .hud .streak{display:none;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--border);border-radius:99px;color:var(--ink-warm);text-transform:none;font-size:14px;letter-spacing:.02em;font-family:var(--font-body);font-weight:500}
+  .hud .streak.on{display:inline-flex;animation:fadeInUp .5s var(--ease)}
+  .hud .streak svg{width:15px;height:15px;color:var(--accent-warm)}
+
+  .icon-btn{width:42px;height:42px;border-radius:11px;border:1px solid var(--border);background:var(--field-bg);color:var(--ink-dim);display:inline-flex;align-items:center;justify-content:center;transition:all .25s var(--ease);cursor:pointer}
+  .icon-btn:hover{color:var(--ink-primary);border-color:var(--border-strong);background:var(--key-hover)}
+  .icon-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .icon-btn.on{color:var(--accent-warm);border-color:var(--border-strong)}
+
+  /* ---------- Version badge ---------- */
+  .version{position:absolute;bottom:22px;left:30px;z-index:5;font-family:var(--font-mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);opacity:.7}
+
+  /* ---------- Hint ---------- */
+  .hint{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);animation:pulseHint 2.4s ease-in-out infinite;z-index:5;transition:opacity .8s var(--ease), transform .8s var(--ease);will-change:opacity,transform}
+  .hint.gone{opacity:0!important;transform:translate(-50%,10px);pointer-events:none}
+  .hint .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:30px;padding:0 14px;border:1px solid var(--border);border-radius:7px;color:var(--ink-warm);letter-spacing:.14em;box-shadow:inset 0 0 12px rgba(255,180,90,.08)}
+  .hint .touch{display:none}
+  @media (hover:none) and (pointer:coarse){
+    .hint .desktop{display:none}
+    .hint .touch{display:inline-flex}
+  }
+
+  /* ---------- Overlay ---------- */
+  .overlay{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;pointer-events:none;padding:32px;transform:translateY(20px);transition:opacity 1.4s var(--ease), transform 1.4s var(--ease);will-change:opacity,transform}
+  .overlay.on{opacity:1;transform:translateY(0);pointer-events:auto}
+  .overlay .kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.5em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:22px;text-indent:.5em}
+  .overlay .kicker::before,.overlay .kicker::after{content:'';display:inline-block;width:22px;height:1px;background:var(--ink-faint);vertical-align:middle;margin:0 12px;opacity:.7}
+  .overlay h1{margin:0;font-weight:700;font-size:clamp(64px,13vw,168px);line-height:.9;letter-spacing:-.02em;background:linear-gradient(180deg,var(--ink-primary) 0%, var(--accent-warm) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 42px rgba(255,170,80,.22))}
+  html[data-theme="light"] .overlay h1{filter:drop-shadow(0 0 22px rgba(240,135,30,.28))}
+  .overlay .tagline{margin:20px 0 0;font-family:var(--font-serif);font-style:italic;font-size:clamp(20px,2.7vw,30px);color:var(--ink-warm);font-weight:400;letter-spacing:.01em}
+  .divider{margin:34px 0 6px;width:56px;height:1px;background:linear-gradient(90deg,transparent,var(--accent-warm),transparent);opacity:.7}
+  .actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;margin-top:36px}
+
+  .btn{display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 26px;border-radius:14px;font-size:17px;font-weight:500;letter-spacing:.01em;transition:transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease), border-color .3s var(--ease);cursor:pointer;border:1px solid;text-decoration:none;-webkit-tap-highlight-color:transparent}
+  .btn-claude{background:rgba(217,119,87,.1);border-color:rgba(217,119,87,.5);color:#f6e2d8}
+  html[data-theme="light"] .btn-claude{background:rgba(217,119,87,.14);color:#5a2416}
+  .btn-grok{background:rgba(240,236,245,.05);border-color:rgba(210,214,225,.32);color:#f0f0f5}
+  html[data-theme="light"] .btn-grok{background:rgba(120,80,30,.05);border-color:rgba(120,80,30,.28);color:#332a20}
+  .btn-primary{padding:0 30px;background:linear-gradient(180deg,var(--accent-warm),var(--accent-warm-2));border-color:rgba(255,200,130,.6);color:#2a1400;font-weight:600;box-shadow:0 10px 30px rgba(240,135,30,.38)}
+  .arrow{font-size:19px;line-height:1;transition:transform .3s var(--ease);display:inline-block}
+  @media (hover:hover){
+    .btn-claude:hover{background:rgba(217,119,87,.2);border-color:rgba(217,119,87,.85);transform:translateY(-2px);box-shadow:0 12px 30px rgba(217,119,87,.28)}
+    .btn-grok:hover{background:rgba(240,236,245,.11);border-color:rgba(210,214,225,.6);transform:translateY(-2px);box-shadow:0 12px 30px rgba(160,170,190,.16)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 42px rgba(240,135,30,.55)}
+    .btn-primary:hover .arrow{transform:translateX(5px)}
+  }
+  .btn:active{transform:translateY(0) scale(.985)}
+
+  /* ---------- PIN modal ---------- */
+  .pin-wrap{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .35s ease;background:rgba(4,2,6,.74);backdrop-filter:blur(2px);cursor:pointer}
+  html[data-theme="light"] .pin-wrap{background:rgba(230,215,190,.72)}
+  .pin-wrap.on{opacity:1;pointer-events:auto}
+  .pin-card{width:360px;max-width:100%;padding:32px 30px 26px;border-radius:20px;transform:scale(.96);opacity:0;background:var(--panel);border:1px solid var(--panel-border);box-shadow:var(--panel-shadow);text-align:center;transition:transform .5s var(--ease), opacity .5s var(--ease), height .45s var(--ease);overflow:hidden;cursor:default}
+  .pin-wrap.on .pin-card{transform:scale(1);opacity:1}
+
+  .view{display:none;flex-direction:column;align-items:center}
+  .view.active{display:flex;animation:fadeInUp .35s var(--ease)}
+
+  .pin-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--ink-dim);text-indent:.42em}
+  .pin-title{margin:14px 0 4px;font-size:19px;font-weight:600;color:var(--ink-primary);line-height:1.35}
+  .pin-sub{font-size:13px;color:var(--sub);margin-bottom:18px}
+  .pin-dots{display:flex;justify-content:center;gap:10px;margin:6px 0 14px}
+  .pin-cell{width:30px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--field-bg);display:flex;align-items:center;justify-content:center;transition:background .25s var(--ease), border-color .25s var(--ease)}
+  .pin-cell.active{background:var(--field-bg-active);border-color:var(--border-strong)}
+  .pin-cell .dot{width:10px;height:10px;border-radius:50%;background:var(--accent-warm);box-shadow:0 0 10px rgba(255,180,84,.7);opacity:0;transform:scale(0);transition:opacity .2s ease, transform .2s ease}
+  .pin-cell.filled .dot{opacity:1;transform:scale(1)}
+
+  .pin-error{min-height:18px;font-size:12px;color:var(--error);letter-spacing:.04em;margin:-4px 0 12px;opacity:0;transition:opacity .25s var(--ease)}
+  .pin-error.on{opacity:1}
+
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+  .key{height:52px;border-radius:12px;border:1px solid var(--border);background:var(--key-bg);color:var(--ink-warm);font-family:var(--font-body);font-size:21px;font-weight:500;cursor:pointer;transition:background .22s var(--ease), border-color .22s var(--ease), transform .1s ease}
+  @media (hover:hover){.key:hover{background:var(--key-hover);border-color:var(--border-strong)}}
+  .key:active{transform:scale(.96)}
+  .key.del{color:var(--ink-dim);font-size:22px}
+  .key.spacer{border:none;background:transparent;cursor:default;pointer-events:none}
+  .key[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+  .pin-link{margin-top:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-dim);cursor:pointer;padding:4px 6px}
+  .pin-link:hover{color:var(--ink-primary)}
+
+  /* Lockout view */
+  .lockout-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,140,90,.14);border:1px solid rgba(255,140,90,.4);color:var(--error);margin-bottom:14px}
+  .lockout-icon svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2}
+  .lockout-timer{font-family:var(--font-mono);font-size:28px;letter-spacing:.08em;color:var(--ink-primary);font-variant-numeric:tabular-nums;margin:6px 0 4px}
+
+  /* Recovery view */
+  .recovery-grid{display:flex;flex-direction:column;gap:8px;width:100%;margin:6px 0 4px}
+  .recovery-input{width:100%;height:44px;border-radius:11px;border:1px solid var(--border);background:var(--field-bg);color:var(--ink-primary);font-family:var(--font-body);font-size:15px;padding:0 14px;letter-spacing:.02em;outline:none;text-align:center;transition:border-color .2s var(--ease), background .2s var(--ease)}
+  .recovery-input::placeholder{color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+  .recovery-input:focus{border-color:var(--border-strong);background:var(--field-bg-active)}
+  .recovery-input.good{border-color:rgba(140,200,120,.5);background:rgba(140,200,120,.08)}
+  html[data-theme="light"] .recovery-input.good{border-color:rgba(80,140,60,.55);background:rgba(140,200,120,.14)}
+  .recovery-actions{display:flex;gap:10px;width:100%;margin-top:12px}
+  .btn-mini{flex:1;height:44px;border-radius:11px;border:1px solid var(--border);background:var(--key-bg);color:var(--ink-warm);font-size:14px;letter-spacing:.02em;font-weight:500;cursor:pointer;transition:all .22s var(--ease)}
+  .btn-mini:hover{border-color:var(--border-strong);background:var(--key-hover)}
+  .btn-mini.primary{background:linear-gradient(180deg,var(--accent-warm),var(--accent-warm-2));border-color:rgba(255,200,130,.6);color:#2a1400;font-weight:600}
+  .btn-mini.primary:hover{filter:brightness(1.05)}
+
+  /* Granted */
+  .check-halo{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#ffd089,var(--accent-warm-2));box-shadow:0 0 44px var(--accent-glow), inset 0 -6px 12px rgba(180,90,20,.3);margin-bottom:18px;position:relative}
+  .check-halo::before{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(255,180,84,.35);opacity:.7}
+  .check-halo svg{width:34px;height:34px;stroke:#2a1400;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .grant-title{font-size:23px;font-weight:600;color:var(--ink-primary);letter-spacing:-.005em}
+  .grant-sub{font-family:var(--font-serif);font-style:italic;font-size:18px;color:var(--ink-warm);margin:8px 0 22px}
+
+  /* Enter Command Center button — premium primary CTA */
+  .btn-enter{
+    position:relative;
+    width:100%;
+    height:64px;
+    border-radius:14px;
+    border:1px solid rgba(255,200,130,.55);
+    background:linear-gradient(180deg,#ffc271 0%, var(--accent-warm) 45%, var(--accent-warm-2) 100%);
+    color:#2a1400;
+    font-family:var(--font-body);
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    cursor:pointer;
+    overflow:hidden;
+    box-shadow:
+      0 12px 36px -8px rgba(240,135,30,.55),
+      0 2px 8px rgba(240,135,30,.25),
+      inset 0 1px 0 rgba(255,240,210,.5),
+      inset 0 -2px 6px rgba(120,50,0,.15);
+    transition:transform .35s var(--ease), box-shadow .35s var(--ease), filter .35s var(--ease);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+  }
+  .btn-enter .btn-enter-label{position:relative;z-index:2;display:inline-flex;align-items:center;gap:14px}
+  .btn-enter .btn-enter-arrow{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;border-radius:50%;
+    background:rgba(42,20,0,.14);
+    transition:transform .35s var(--ease), background .35s var(--ease);
+    font-size:15px;line-height:1;
+  }
+  .btn-enter::before{
+    content:'';
+    position:absolute;
+    top:0;left:-60%;
+    width:50%;height:100%;
+    background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.45) 50%,transparent 100%);
+    transform:skewX(-18deg);
+    transition:transform .9s var(--ease);
+    z-index:1;
+    pointer-events:none;
+  }
+  @media (hover:hover){
+    .btn-enter:hover{
+      transform:translateY(-2px);
+      filter:brightness(1.04);
+      box-shadow:
+        0 20px 44px -8px rgba(240,135,30,.7),
+        0 4px 12px rgba(240,135,30,.35),
+        inset 0 1px 0 rgba(255,240,210,.6),
+        inset 0 -2px 6px rgba(120,50,0,.15);
+    }
+    .btn-enter:hover::before{transform:translateX(360%) skewX(-18deg)}
+    .btn-enter:hover .btn-enter-arrow{transform:translateX(4px);background:rgba(42,20,0,.22)}
+  }
+  .btn-enter:active{transform:translateY(0) scale(.99)}
+
+  .shake{animation:pinShake .38s ease}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 640px){
+    .hud-left{top:16px;left:16px;gap:5px}
+    .hud-right{top:16px;right:16px;gap:14px}
+    .hud .clock{font-size:19px}
+    .hud .date{font-size:11px;letter-spacing:.1em}
+    .hud .countdown .n{font-size:16px}
+    .hud .countdown .l{font-size:9.5px;letter-spacing:.12em}
+    .hud .streak{padding:6px 11px;font-size:12px}
+    .icon-btn{width:36px;height:36px}
+    .icon-btn svg{width:16px;height:16px}
+    .version{left:16px;bottom:14px;font-size:10px}
+    .actions{margin-top:28px;gap:12px}
+    .btn{height:52px;padding:0 20px;font-size:15px}
+    .btn-primary{padding:0 24px}
+    .overlay{padding:24px 20px}
+    .pin-card{width:320px;padding:26px 22px 22px}
+    .key{height:48px;font-size:19px}
+    .pin-cell{width:26px;height:34px}
+    .btn-enter{height:58px;font-size:15px;padding:0 22px}
+  }
+
+  /* ---------- Reduced motion ---------- */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    .hint{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <canvas id="bh" aria-hidden="true"></canvas>
+  <div class="overlay-backdrop" id="overlayBackdrop" aria-hidden="true"></div>
+  <canvas id="ambient" aria-hidden="true"></canvas>
+
+  <div class="tap-zone" id="tapZone" aria-hidden="true"></div>
+
+  <!-- Top-left HUD: clock + date -->
+  <div class="hud hud-left" aria-hidden="false">
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date" id="date">Loading&hellip;</div>
+  </div>
+
+  <!-- Top-right HUD: countdowns + streak + controls -->
+  <div class="hud hud-right" aria-hidden="false">
+    <div class="streak" id="streak" title="Task-completion streak">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2s3 4 3 8a3 3 0 0 1-6 0c0-1 .5-2 .5-2S8 10 8 12a4 4 0 0 0 8 0c0-4-4-10-4-10zM7 16c-1 2-1 4 1 5s5 0 5-3-3-2-3-4a5 5 0 0 1-3 2z"/></svg>
+      <span id="streakN">0</span>d
+    </div>
+    <div class="countdown"><span class="n" id="neetN">&mdash;</span><span class="l">NEET 2027</span></div>
+    <div class="countdown"><span class="n" id="syllN">&mdash;</span><span class="l">Syllabus target</span></div>
+    <button class="icon-btn" id="audioBtn" type="button" title="Ambient audio" aria-label="Toggle ambient audio">
+      <svg viewBox="0 0 24 24" id="audioIcon"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" type="button" title="Toggle theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" id="themeIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <!-- Version badge -->
+  <div class="version">v0.1 &middot; beta</div>
+
+  <!-- Intro hint -->
+  <div class="hint" id="hint">
+    <span>Press</span>
+    <span class="kbd desktop">space</span>
+    <span class="kbd touch">tap</span>
+    <span>to begin</span>
+  </div>
+
+  <!-- Main overlay -->
+  <div class="overlay" id="overlay" role="region" aria-label="DEB OS command center">
+    <div class="kicker">Command Center</div>
+    <h1>DEB&thinsp;OS</h1>
+    <p class="tagline">&ldquo;Oh Captain! My Captain! It&rsquo;s time for 720&rdquo;</p>
+    <div class="divider"></div>
+    <div class="actions">
+      <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn btn-claude" title="Open Claude in a new tab" aria-label="Open Claude in a new tab">
+        <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
+          <g stroke="#d97757" stroke-width="8" stroke-linecap="round">
+            <line x1="50" y1="50" x2="50" y2="8"/><line x1="50" y1="50" x2="50" y2="92"/>
+            <line x1="50" y1="50" x2="8" y2="50"/><line x1="50" y1="50" x2="92" y2="50"/>
+            <line x1="50" y1="50" x2="20" y2="20"/><line x1="50" y1="50" x2="80" y2="80"/>
+            <line x1="50" y1="50" x2="80" y2="20"/><line x1="50" y1="50" x2="20" y2="80"/>
+            <line x1="50" y1="50" x2="33" y2="12"/><line x1="50" y1="50" x2="67" y2="88"/>
+            <line x1="50" y1="50" x2="12" y2="33"/><line x1="50" y1="50" x2="88" y2="67"/>
+            <line x1="50" y1="50" x2="67" y2="12"/><line x1="50" y1="50" x2="33" y2="88"/>
+            <line x1="50" y1="50" x2="88" y2="33"/><line x1="50" y1="50" x2="12" y2="67"/>
+          </g>
+        </svg>
+        Claude
+      </a>
+      <a href="https://grok.com" target="_blank" rel="noopener noreferrer" class="btn btn-grok" title="Open Grok in a new tab" aria-label="Open Grok in a new tab">
+        <svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round">
+          <path d="M22 82 L70 20"/><path d="M40 82 L78 33"/><path d="M62 82 L82 56"/>
+        </svg>
+        Grok
+      </a>
+      <button type="button" class="btn btn-primary" id="crackBtn" aria-haspopup="dialog">Let&rsquo;s Crack Today <span class="arrow">&rarr;</span></button>
+    </div>
+  </div>
+
+  <!-- PIN dialog -->
+  <div class="pin-wrap" id="pinWrap" role="dialog" aria-modal="true" aria-labelledby="pinTitle" aria-hidden="true">
+    <div class="pin-card" id="pinCard">
+
+      <!-- LOCKED (default) -->
+      <div class="view active" data-view="locked">
+        <div class="pin-eyebrow">Authorization</div>
+        <div class="pin-title" id="pinTitle">Enter access PIN</div>
+        <div class="pin-sub">6-digit clearance code</div>
+        <div class="pin-dots" id="pinDots" aria-live="polite" aria-label="PIN digits entered"></div>
+        <div class="pin-error" id="pinError"></div>
+        <div class="pin-pad" id="pinPad"></div>
+        <button class="pin-link" id="forgotBtn" type="button">Forgot PIN?</button>
+      </div>
+
+      <!-- LOCKOUT -->
+      <div class="view" data-view="lockout">
+        <div class="lockout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </div>
+        <div class="pin-title">Too many attempts</div>
+        <div class="pin-sub">Access temporarily locked</div>
+        <div class="lockout-timer" id="lockoutTimer">05:00</div>
+        <button class="pin-link" id="lockoutForgotBtn" type="button">Forgot PIN?</button>
+      </div>
+
+      <!-- RECOVERY -->
+      <div class="view" data-view="recovery">
+        <div class="pin-eyebrow">Recovery</div>
+        <div class="pin-title" id="recoveryQ">Recovery question</div>
+        <div class="pin-sub">All five &mdash; any box, any order</div>
+        <div class="recovery-grid" id="recoveryGrid">
+          <input class="recovery-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="words" placeholder="Name 1" aria-label="Name 1">
+          <input class="recovery-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="words" placeholder="Name 2" aria-label="Name 2">
+          <input class="recovery-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="words" placeholder="Name 3" aria-label="Name 3">
+          <input class="recovery-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="words" placeholder="Name 4" aria-label="Name 4">
+          <input class="recovery-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="words" placeholder="Name 5" aria-label="Name 5">
+        </div>
+        <div class="pin-error" id="recoveryError"></div>
+        <div class="recovery-actions">
+          <button class="btn-mini" id="recoveryCancel" type="button">Cancel</button>
+          <button class="btn-mini primary" id="recoveryVerify" type="button">Verify</button>
+        </div>
+      </div>
+
+      <!-- NEW PIN -->
+      <div class="view" data-view="newpin">
+        <div class="pin-eyebrow">Reset</div>
+        <div class="pin-title" id="newPinTitle">Choose a new PIN</div>
+        <div class="pin-sub" id="newPinSub">6 digits</div>
+        <div class="pin-dots" id="newPinDots"></div>
+        <div class="pin-error" id="newPinError"></div>
+        <div class="pin-pad" id="newPinPad"></div>
+      </div>
+
+      <!-- GRANTED -->
+      <div class="view" data-view="granted">
+        <div class="check-halo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 12.5 L10 18 L20 6"/></svg>
+        </div>
+        <div class="grant-title">Access granted</div>
+        <div class="grant-sub">Welcome aboard, Captain.</div>
+        <button class="btn-enter" id="enterBtn" type="button">
+          <span class="btn-enter-label">
+            Enter Command Center
+            <span class="btn-enter-arrow" aria-hidden="true">&rarr;</span>
+          </span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------- CONFIG (override via localStorage) ----------
+  var CONFIG = {
+    DEFAULT_PIN: '241207',
+    RECOVERY_Q: "What are your girlfriends' names?",
+    // Any order in any box, case-insensitive, trimmed. All must appear.
+    DEFAULT_RECOVERY_NAMES: ['Kiara','Aarohi','Saanvi','Ritika','Mohini'],
+    NEET_DATE: '2027-05-03T09:00:00',
+    SYLLABUS_DATE: '2026-12-31T23:59:59',
+    LOCKOUT_MS: 5 * 60 * 1000,
+    MAX_ATTEMPTS: 5,
+    NEXT_PAGE: 'command.html'
+  };
+
+  // ---------- Storage helpers ----------
+  var LS = {
+    get: function(k, d){ try{ var v = localStorage.getItem(k); return v == null ? d : v; }catch(e){ return d; } },
+    set: function(k, v){ try{ localStorage.setItem(k, v); }catch(e){} },
+    del: function(k){ try{ localStorage.removeItem(k); }catch(e){} },
+    getNum: function(k, d){ var v = this.get(k); return v == null ? d : (parseInt(v,10) || 0); }
+  };
+  var SS = {
+    get: function(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } },
+    set: function(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
+  };
+
+  // Seed defaults on first run
+  if (!LS.get('debos.pin'))              LS.set('debos.pin', CONFIG.DEFAULT_PIN);
+  if (!LS.get('debos.recovery.names'))   LS.set('debos.recovery.names', JSON.stringify(CONFIG.DEFAULT_RECOVERY_NAMES));
+
+  // ---------- Elements ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var canvas = $('bh');
+  var ambientCanvas = $('ambient');
+  var overlayBackdrop = $('overlayBackdrop');
+  var tapZone = $('tapZone');
+  var hint = $('hint');
+  var overlay = $('overlay');
+  var pinWrap = $('pinWrap');
+  var pinCard = $('pinCard');
+  var pinDots = $('pinDots');
+  var pinPad = $('pinPad');
+  var pinError = $('pinError');
+  var crackBtn = $('crackBtn');
+  var forgotBtn = $('forgotBtn');
+  var lockoutForgotBtn = $('lockoutForgotBtn');
+  var lockoutTimer = $('lockoutTimer');
+  var recoveryGrid = $('recoveryGrid');
+  var recoveryInputs = recoveryGrid.querySelectorAll('.recovery-input');
+  var recoveryVerify = $('recoveryVerify');
+  var recoveryCancel = $('recoveryCancel');
+  var recoveryError = $('recoveryError');
+  var recoveryQ = $('recoveryQ');
+  var newPinDots = $('newPinDots');
+  var newPinPad = $('newPinPad');
+  var newPinError = $('newPinError');
+  var newPinTitle = $('newPinTitle');
+  var newPinSub = $('newPinSub');
+  var enterBtn = $('enterBtn');
+  var clockEl = $('clock');
+  var dateEl = $('date');
+  var neetN = $('neetN');
+  var syllN = $('syllN');
+  var streakEl = $('streak');
+  var streakN = $('streakN');
+  var themeBtn = $('themeBtn');
+  var themeIcon = $('themeIcon');
+  var audioBtn = $('audioBtn');
+  var audioIcon = $('audioIcon');
+
+  var ctx = canvas.getContext('2d');
+  var ambCtx = ambientCanvas.getContext('2d');
+
+  var state = {
+    triggered: false,
+    spinning: true,
+    ambient: false,
+    pinOpen: false,
+    view: 'locked',
+    pin: '',
+    newPin: '',
+    newPinStage: 0, // 0 = first entry, 1 = confirm
+    firstNewPin: '',
+    unlocked: false,
+    resetMode: false
+  };
+
+  // ---------- Reduced motion & session skip ----------
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var alreadyCrossed = SS.get('debos.intro.crossed') === '1';
+
+  // ---------- Theme ----------
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    LS.set('debos.theme', t);
+    if (t === 'dark'){
+      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    } else {
+      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+    }
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#020104' : '#f3ede2');
+  }
+  applyTheme(LS.get('debos.theme','dark'));
+  themeBtn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  });
+
+  // ---------- Clock & countdowns ----------
+  function pad2(n){ return n < 10 ? '0'+n : ''+n; }
+  function fmtDate(d){
+    return d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  }
+  var neetDate = new Date(CONFIG.NEET_DATE);
+  var syllDate = new Date(CONFIG.SYLLABUS_DATE);
+  function updateClockNow(){
+    var now = new Date();
+    clockEl.textContent = pad2(now.getHours())+':'+pad2(now.getMinutes())+':'+pad2(now.getSeconds());
+    dateEl.textContent = fmtDate(now);
+  }
+  function daysUntil(target){
+    var diff = target.getTime() - Date.now();
+    if (diff <= 0) return { text:'arrived', done:true };
+    var d = Math.floor(diff / 86400000);
+    return { text: d.toLocaleString() + 'd', done:false };
+  }
+  function updateCountdowns(){
+    var a = daysUntil(neetDate); neetN.textContent = a.text;
+    var b = daysUntil(syllDate); syllN.textContent = b.text;
+  }
+  updateClockNow(); updateCountdowns();
+  setInterval(updateClockNow, 1000);
+  setInterval(updateCountdowns, 60000);
+
+  // ---------- Streak ----------
+  (function(){
+    var s = LS.getNum('debos.streak', 0);
+    if (s > 0){ streakN.textContent = s; streakEl.classList.add('on'); }
+  })();
+
+  // ---------- Black-hole particles (init once) ----------
+  var disk = [], buf = [], ring = [];
+  (function initParticles(){
+    var N = reducedMotion ? 600 : 1500;
+    for (var i = 0; i < N; i++){
+      var u = Math.pow(Math.random(), 0.55);
+      var rMul = 1.18 + u * 2.35;
+      var hot = 1 - (rMul - 1.18) / 2.35;
+      disk.push({ rMul: rMul, b0: Math.random()*Math.PI*2, vj: Math.random()*2-1, seed: Math.random(), hot: hot });
+      buf.push({ x:0,y:0,dx:0,dy:0,size:1,front:false,col:'#000' });
+    }
+    var M = reducedMotion ? 200 : 520;
+    for (var j = 0; j < M; j++){
+      ring.push({ a0: Math.random()*Math.PI*2, rr: 1.02 + Math.random()*0.16, seed: Math.random() });
+    }
+  })();
+
+  // ---------- Ambient dust (initialized after fade) ----------
+  var dust = [];
+  function initDust(){
+    dust = [];
+    var count = reducedMotion ? 0 : 42;
+    for (var i = 0; i < count; i++){
+      dust.push({
+        x: Math.random(),
+        y: Math.random(),
+        vy: 0.00006 + Math.random()*0.00016,
+        vx: (Math.random()-.5) * 0.00006,
+        r: 0.6 + Math.random()*1.4,
+        a: 0.15 + Math.random()*0.35,
+        tw: Math.random()*Math.PI*2
+      });
+    }
+  }
+
+  // ---------- Canvas resize (debounced via rAF) ----------
+  var dpr = 1;
+  var resizePending = false;
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    var w = Math.round(window.innerWidth * dpr);
+    var h = Math.round(window.innerHeight * dpr);
+    canvas.width = w; canvas.height = h;
+    ambientCanvas.width = w; ambientCanvas.height = h;
+  }
+  function onResize(){
+    if (resizePending) return;
+    resizePending = true;
+    requestAnimationFrame(function(){
+      resize();
+      resizePending = false;
+    });
+  }
+  resize();
+  window.addEventListener('resize', onResize);
+
+  // ---------- Black hole draw ----------
+  var phase = 0;
+  var vel = 0.09, targetVel = 0.09;
+
+  function col(hot, a){
+    var r = 255;
+    var g = Math.round(120 + 130 * hot);
+    var b = Math.round(20 + 175 * hot * hot);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + Math.max(0, Math.min(1, a)) + ')';
+  }
+  function draw(){
+    var W = canvas.width, H = canvas.height;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0,0,W,H);
+    var cx = W/2, cy = H*0.5;
+    var Rs = Math.min(W,H) * 0.145;
+    var inc = 0.30, si = Math.sin(inc);
+    var ph = phase, gl = 1.2;
+
+    var g0 = ctx.createRadialGradient(cx,cy,Rs*0.6,cx,cy,Rs*4.4);
+    g0.addColorStop(0,'rgba(255,150,50,'+(0.10*gl).toFixed(3)+')');
+    g0.addColorStop(0.5,'rgba(220,90,30,'+(0.045*gl).toFixed(3)+')');
+    g0.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g0;
+    ctx.fillRect(0,0,W,H);
+
+    for (var i = 0; i < disk.length; i++){
+      var p = disk[i], s = buf[i];
+      var r = p.rMul * Rs;
+      var spd = Math.pow(1.4 / p.rMul, 1.35);
+      var b = p.b0 + ph * spd * 6.2;
+      var cb = Math.cos(b), sb = Math.sin(b);
+      s.x = cx + r*cb;
+      s.y = cy + (r*sb)*si + p.vj*Rs*0.05;
+      s.front = sb > 0;
+      var dopp = 0.30 + 0.70*(0.5 - 0.5*cb);
+      var flick = 0.75 + 0.25*Math.sin(p.seed*40 + ph*3);
+      var bright = (0.45 + 0.55*p.hot) * dopp * flick;
+      var tx = -r*sb, ty = (r*cb)*si;
+      var tl = Math.hypot(tx,ty) || 1;
+      var len = 22 * spd * dpr;
+      s.dx = (tx/tl)*len; s.dy = (ty/tl)*len;
+      s.size = (0.7 + 1.7*p.hot) * dpr;
+      s.col = col(p.hot, bright);
+    }
+    function drawStreak(s){
+      ctx.strokeStyle = s.col;
+      ctx.lineWidth = s.size;
+      ctx.beginPath();
+      ctx.moveTo(s.x - s.dx, s.y - s.dy);
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (var k = 0; k < buf.length; k++) if (!buf[k].front) drawStreak(buf[k]);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.beginPath(); ctx.arc(cx,cy,Rs,0,Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var m = 0; m < ring.length; m++){
+      var rp = ring[m];
+      var a = rp.a0 + phase*2.2;
+      var ca = Math.cos(a), sa = Math.sin(a);
+      var rr = Rs*rp.rr;
+      var x = cx + rr*ca, y = cy + rr*sa;
+      var topbot = 0.35 + 0.65*Math.abs(sa);
+      var shim = 0.6 + 0.4*Math.sin(rp.seed*30 + phase*4);
+      var br = topbot*shim*0.9;
+      ctx.fillStyle = 'rgba(255,'+Math.round(200+40*Math.abs(sa))+','+Math.round(120+80*Math.abs(sa))+','+Math.min(1,br)+')';
+      ctx.beginPath(); ctx.arc(x,y,(0.8+1.0*Math.abs(sa))*dpr,0,Math.PI*2); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,225,170,0.5)';
+    ctx.lineWidth = 1.4*dpr;
+    ctx.beginPath(); ctx.arc(cx,cy,Rs*1.012,0,Math.PI*2); ctx.stroke();
+    for (var n = 0; n < buf.length; n++) if (buf[n].front) drawStreak(buf[n]);
+  }
+
+  // ---------- Ambient dust draw ----------
+  function drawAmbient(){
+    var W = ambientCanvas.width, H = ambientCanvas.height;
+    ambCtx.clearRect(0,0,W,H);
+    for (var i = 0; i < dust.length; i++){
+      var d = dust[i];
+      d.y -= d.vy; d.x += d.vx;
+      d.tw += 0.02;
+      if (d.y < -0.02){ d.y = 1.02; d.x = Math.random(); }
+      if (d.x < -0.02) d.x = 1.02;
+      if (d.x > 1.02) d.x = -0.02;
+      var alpha = d.a * (0.6 + 0.4*Math.sin(d.tw));
+      ambCtx.fillStyle = 'rgba(255,200,140,'+alpha.toFixed(3)+')';
+      ambCtx.beginPath();
+      ambCtx.arc(d.x*W, d.y*H, d.r*dpr, 0, Math.PI*2);
+      ambCtx.fill();
+    }
+  }
+
+  // ---------- Master render loop ----------
+  var raf = null;
+  var paused = false;
+  function loop(){
+    if (paused){ raf = null; return; }
+    raf = requestAnimationFrame(loop);
+    if (state.spinning){
+      vel += (targetVel - vel) * 0.08;
+      phase += vel;
+      draw();
+    }
+    if (state.ambient) drawAmbient();
+  }
+  loop();
+
+  // Pause when tab is hidden
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden){
+      paused = true;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    } else {
+      if (!paused) return;
+      paused = false;
+      if (!raf) loop();
+    }
+  });
+
+  // ---------- Trigger fade ----------
+  function trigger(instant){
+    if (state.triggered) return;
+    state.triggered = true;
+    SS.set('debos.intro.crossed','1');
+    tapZone.classList.add('gone');
+    if (instant || reducedMotion){
+      canvas.style.transition = 'none';
+      canvas.style.opacity = '0';
+      hint.classList.add('gone');
+      overlay.classList.add('on');
+      overlayBackdrop.style.opacity = '1';
+      state.spinning = false;
+      initDust();
+      state.ambient = true;
+      ambientCanvas.style.opacity = '1';
+      return;
+    }
+    var dur = 1.6;
+    canvas.style.transition = 'opacity ' + (dur*0.85) + 's var(--ease)';
+    canvas.style.opacity = '0';
+    hint.classList.add('gone');
+    overlayBackdrop.style.opacity = '1';
+    overlay.classList.add('on');
+    setTimeout(function(){
+      state.spinning = false;
+      initDust();
+      state.ambient = true;
+      ambientCanvas.style.opacity = '1';
+    }, dur*1000 + 140);
+  }
+
+  // ---------- Session skip / reduced motion ----------
+  if (alreadyCrossed || reducedMotion){
+    trigger(true);
+  }
+
+  // ---------- PIN: view switching with height animation ----------
+  var viewEls = pinCard.querySelectorAll('.view');
+  function setView(name){
+    if (state.view === name) return;
+    var oldH = pinCard.offsetHeight;
+    viewEls.forEach(function(v){ v.classList.toggle('active', v.dataset.view === name); });
+    // measure new height
+    pinCard.style.height = 'auto';
+    var newH = pinCard.offsetHeight;
+    pinCard.style.height = oldH + 'px';
+    // force reflow, then transition
+    void pinCard.offsetHeight;
+    pinCard.style.height = newH + 'px';
+    state.view = name;
+    var clear = function(e){
+      if (e && e.propertyName !== 'height') return;
+      pinCard.style.height = '';
+      pinCard.removeEventListener('transitionend', clear);
+    };
+    pinCard.addEventListener('transitionend', clear);
+    // focus first sensible thing
+    setTimeout(function(){
+      var first = pinCard.querySelector('.view.active button:not([disabled]), .view.active input');
+      if (first) first.focus();
+    }, 100);
+  }
+
+  // ---------- PIN keypad ----------
+  function buildPad(el, onPress){
+    el.innerHTML = '';
+    var keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
+    keys.forEach(function(k){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      if (k === ''){
+        btn.className = 'key spacer';
+        btn.disabled = true;
+        btn.setAttribute('aria-hidden','true');
+        btn.tabIndex = -1;
+      } else if (k === 'del'){
+        btn.className = 'key del';
+        btn.innerHTML = '&#9003;';
+        btn.setAttribute('aria-label','Delete last digit');
+        btn.addEventListener('click', function(){ onPress('del'); haptic(); });
+      } else {
+        btn.className = 'key';
+        btn.textContent = k;
+        btn.setAttribute('aria-label','Digit '+k);
+        btn.addEventListener('click', function(){ onPress(k); haptic(); });
+      }
+      el.appendChild(btn);
+    });
+  }
+
+  // ---------- Dot rendering (in-place, so transitions play) ----------
+  function ensureDots(container, count){
+    if (container.children.length === count) return;
+    container.innerHTML = '';
+    for (var i = 0; i < count; i++){
+      var cell = document.createElement('div');
+      cell.className = 'pin-cell';
+      var dot = document.createElement('span');
+      dot.className = 'dot';
+      cell.appendChild(dot);
+      container.appendChild(cell);
+    }
+  }
+  function updateDots(container, filled, activeIdx){
+    ensureDots(container, 6);
+    for (var i = 0; i < 6; i++){
+      var cell = container.children[i];
+      cell.classList.toggle('filled', i < filled);
+      cell.classList.toggle('active', i === activeIdx);
+    }
+  }
+
+  // ---------- Haptic ----------
+  function haptic(){
+    try { if (navigator.vibrate) navigator.vibrate(8); } catch(e){}
+  }
+
+  // ---------- Lockout ----------
+  var lockoutInterval = null;
+  function isLocked(){
+    var until = LS.getNum('debos.pin.lockoutUntil', 0);
+    return until > Date.now();
+  }
+  function startLockoutTimer(){
+    var until = LS.getNum('debos.pin.lockoutUntil', 0);
+    function tick(){
+      var rem = until - Date.now();
+      if (rem <= 0){
+        clearInterval(lockoutInterval);
+        lockoutInterval = null;
+        LS.del('debos.pin.lockoutUntil');
+        LS.set('debos.pin.attempts','0');
+        state.pin = '';
+        updateDots(pinDots, 0, 0);
+        pinError.classList.remove('on');
+        setView('locked');
+        return;
+      }
+      var mm = Math.floor(rem/60000);
+      var ss = Math.floor((rem%60000)/1000);
+      lockoutTimer.textContent = pad2(mm)+':'+pad2(ss);
+    }
+    tick();
+    lockoutInterval = setInterval(tick, 500);
+  }
+
+  // ---------- PIN entry ----------
+  function shakeCard(){
+    pinCard.classList.remove('shake');
+    void pinCard.offsetWidth;
+    pinCard.classList.add('shake');
+  }
+  function pressPin(k){
+    if (state.unlocked || state.view !== 'locked') return;
+    if (isLocked()){ setView('lockout'); startLockoutTimer(); return; }
+    if (k === 'del'){
+      state.pin = state.pin.slice(0, -1);
+      pinError.classList.remove('on');
+    } else if (/^\d$/.test(k) && state.pin.length < 6){
+      state.pin += k;
+    }
+    updateDots(pinDots, state.pin.length, state.pin.length < 6 ? state.pin.length : -1);
+    if (state.pin.length === 6){
+      var actualPin = LS.get('debos.pin', CONFIG.DEFAULT_PIN);
+      if (state.pin === actualPin){
+        state.unlocked = true;
+        LS.set('debos.pin.attempts','0');
+        SS.set('debos.session.unlocked','1');
+        setView('granted');
+        setTimeout(function(){ if (state.unlocked) proceedToCommand(); }, 1600);
+      } else {
+        var attempts = LS.getNum('debos.pin.attempts', 0) + 1;
+        LS.set('debos.pin.attempts', String(attempts));
+        var remaining = CONFIG.MAX_ATTEMPTS - attempts;
+        if (attempts >= CONFIG.MAX_ATTEMPTS){
+          LS.set('debos.pin.lockoutUntil', String(Date.now() + CONFIG.LOCKOUT_MS));
+          setView('lockout');
+          startLockoutTimer();
+        } else {
+          pinError.innerHTML = 'Incorrect &mdash; ' + remaining + ' attempt' + (remaining===1?'':'s') + ' left';
+          pinError.classList.add('on');
+          shakeCard();
+          setTimeout(function(){
+            state.pin = '';
+            updateDots(pinDots, 0, 0);
+          }, 380);
+        }
+      }
+    } else {
+      pinError.classList.remove('on');
+    }
+  }
+
+  // ---------- New-PIN entry (post-recovery) ----------
+  function pressNewPin(k){
+    if (state.view !== 'newpin') return;
+    if (k === 'del'){
+      state.newPin = state.newPin.slice(0, -1);
+      newPinError.classList.remove('on');
+    } else if (/^\d$/.test(k) && state.newPin.length < 6){
+      state.newPin += k;
+    }
+    updateDots(newPinDots, state.newPin.length, state.newPin.length < 6 ? state.newPin.length : -1);
+    if (state.newPin.length === 6){
+      if (state.newPinStage === 0){
+        state.firstNewPin = state.newPin;
+        state.newPin = '';
+        state.newPinStage = 1;
+        newPinTitle.textContent = 'Confirm your new PIN';
+        newPinSub.textContent = 'Re-enter to confirm';
+        setTimeout(function(){ updateDots(newPinDots, 0, 0); }, 260);
+      } else {
+        if (state.newPin === state.firstNewPin){
+          LS.set('debos.pin', state.newPin);
+          LS.set('debos.pin.attempts', '0');
+          LS.del('debos.pin.lockoutUntil');
+          state.unlocked = true;
+          SS.set('debos.session.unlocked','1');
+          setView('granted');
+          setTimeout(function(){ if (state.unlocked) proceedToCommand(); }, 1600);
+        } else {
+          newPinError.innerHTML = 'Codes don&rsquo;t match &mdash; try again';
+          newPinError.classList.add('on');
+          shakeCard();
+          setTimeout(function(){
+            state.newPin = '';
+            state.firstNewPin = '';
+            state.newPinStage = 0;
+            newPinTitle.textContent = 'Choose a new PIN';
+            newPinSub.textContent = '6 digits';
+            updateDots(newPinDots, 0, 0);
+          }, 500);
+        }
+      }
+    } else {
+      newPinError.classList.remove('on');
+    }
+  }
+
+  // Build both pads
+  buildPad(pinPad, pressPin);
+  buildPad(newPinPad, pressNewPin);
+  ensureDots(pinDots, 6);
+  ensureDots(newPinDots, 6);
+  updateDots(pinDots, 0, 0);
+  updateDots(newPinDots, 0, 0);
+
+  // ---------- Open / close modal ----------
+  var lastFocused = null;
+  function openPin(){
+    lastFocused = document.activeElement;
+    state.pin = '';
+    state.newPin = '';
+    state.firstNewPin = '';
+    state.newPinStage = 0;
+    state.unlocked = false;
+    state.pinOpen = true;
+    pinError.classList.remove('on');
+    newPinError.classList.remove('on');
+    recoveryError.classList.remove('on');
+    for (var ri = 0; ri < recoveryInputs.length; ri++){
+      recoveryInputs[ri].value = '';
+      recoveryInputs[ri].classList.remove('good');
+    }
+    recoveryQ.textContent = CONFIG.RECOVERY_Q;
+    if (isLocked()){
+      setView('lockout');
+      startLockoutTimer();
+    } else {
+      // Set initial view without animation (first open)
+      viewEls.forEach(function(v){ v.classList.toggle('active', v.dataset.view === 'locked'); });
+      state.view = 'locked';
+      updateDots(pinDots, 0, 0);
+    }
+    pinWrap.classList.add('on');
+    pinWrap.setAttribute('aria-hidden','false');
+    setTimeout(function(){
+      var f = pinCard.querySelector('.view.active button:not([disabled]), .view.active input');
+      if (f) f.focus();
+    }, 120);
+  }
+  function closePin(){
+    state.pinOpen = false;
+    pinWrap.classList.remove('on');
+    pinWrap.setAttribute('aria-hidden','true');
+    if (lockoutInterval){ clearInterval(lockoutInterval); lockoutInterval = null; }
+    setTimeout(function(){
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    }, 300);
+  }
+  function proceedToCommand(){
+    var t = 380;
+    pinWrap.style.transition = 'opacity '+t+'ms var(--ease-soft)';
+    overlay.style.transition = 'opacity '+t+'ms var(--ease-soft)';
+    pinWrap.style.opacity = '0';
+    overlay.style.opacity = '0';
+    setTimeout(function(){ window.location.href = CONFIG.NEXT_PAGE; }, t + 40);
+  }
+
+  crackBtn.addEventListener('click', function(){
+    // Session-unlocked users skip PIN and go straight to Command Center
+    if (SS.get('debos.session.unlocked') === '1'){
+      proceedToCommand();
+    } else {
+      openPin();
+    }
+  });
+  enterBtn.addEventListener('click', proceedToCommand);
+
+  // Click outside card closes — but only if not showing granted or in the middle of lockout
+  pinWrap.addEventListener('click', function(e){
+    if (e.target !== pinWrap) return;
+    if (state.view === 'granted') return;
+    closePin();
+  });
+
+  // Forgot handlers
+  function goRecovery(){
+    for (var i = 0; i < recoveryInputs.length; i++){
+      recoveryInputs[i].value = '';
+      recoveryInputs[i].classList.remove('good');
+    }
+    recoveryError.classList.remove('on');
+    setView('recovery');
+  }
+  forgotBtn.addEventListener('click', goRecovery);
+  lockoutForgotBtn.addEventListener('click', goRecovery);
+
+  recoveryCancel.addEventListener('click', function(){
+    if (isLocked()){ setView('lockout'); startLockoutTimer(); } else { setView('locked'); }
+  });
+
+  function getExpectedNames(){
+    var raw = LS.get('debos.recovery.names');
+    var arr;
+    try { arr = JSON.parse(raw); } catch(e){ arr = null; }
+    if (!Array.isArray(arr)) arr = CONFIG.DEFAULT_RECOVERY_NAMES.slice();
+    return arr.map(function(n){ return (n||'').trim().toLowerCase(); });
+  }
+  function verifyRecovery(){
+    var expected = getExpectedNames();
+    var entered = [];
+    for (var i = 0; i < recoveryInputs.length; i++){
+      entered.push((recoveryInputs[i].value || '').trim().toLowerCase());
+    }
+    // Must be exactly 5 non-empty values, and every expected name must appear (unique)
+    if (entered.some(function(v){ return v === ''; })){
+      recoveryError.innerHTML = 'Fill in all five names.';
+      recoveryError.classList.add('on');
+      shakeCard();
+      return;
+    }
+    var expectedSet = expected.slice().sort();
+    var enteredSet  = entered.slice().sort();
+    var match = expectedSet.length === enteredSet.length &&
+                expectedSet.every(function(v,i){ return v === enteredSet[i]; });
+    if (match){
+      // subtle green flash before proceeding
+      for (var j = 0; j < recoveryInputs.length; j++) recoveryInputs[j].classList.add('good');
+      state.resetMode = true;
+      state.newPin = '';
+      state.firstNewPin = '';
+      state.newPinStage = 0;
+      newPinTitle.textContent = 'Choose a new PIN';
+      newPinSub.textContent = '6 digits';
+      updateDots(newPinDots, 0, 0);
+      newPinError.classList.remove('on');
+      LS.del('debos.pin.lockoutUntil');
+      LS.set('debos.pin.attempts','0');
+      if (lockoutInterval){ clearInterval(lockoutInterval); lockoutInterval = null; }
+      setTimeout(function(){ setView('newpin'); }, 380);
+    } else {
+      recoveryError.innerHTML = 'That doesn&rsquo;t match. Try again.';
+      recoveryError.classList.add('on');
+      shakeCard();
+    }
+  }
+  recoveryVerify.addEventListener('click', verifyRecovery);
+  // Enter on any recovery input submits; Tab already flows naturally
+  recoveryInputs.forEach(function(input){
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); verifyRecovery(); }
+    });
+    input.addEventListener('input', function(){
+      // clear the error / good state on edit
+      recoveryError.classList.remove('on');
+      input.classList.remove('good');
+    });
+  });
+
+  // ---------- Focus trap inside modal ----------
+  pinWrap.addEventListener('keydown', function(e){
+    if (!state.pinOpen || e.key !== 'Tab') return;
+    var focusables = pinCard.querySelectorAll('.view.active button:not([disabled]), .view.active input, .view.active a');
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length-1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  });
+
+  // ---------- Global keyboard ----------
+  window.addEventListener('keydown', function(e){
+    // Global Escape to close modal
+    if (state.pinOpen && e.key === 'Escape'){
+      e.preventDefault(); closePin(); return;
+    }
+    if (state.pinOpen){
+      // In-modal digit / backspace handling for the active pad
+      if (state.view === 'locked'){
+        if (/^\d$/.test(e.key)){ e.preventDefault(); pressPin(e.key); }
+        else if (e.key === 'Backspace'){ e.preventDefault(); pressPin('del'); }
+      } else if (state.view === 'newpin'){
+        if (/^\d$/.test(e.key)){ e.preventDefault(); pressNewPin(e.key); }
+        else if (e.key === 'Backspace'){ e.preventDefault(); pressNewPin('del'); }
+      } else if (state.view === 'granted'){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); proceedToCommand(); }
+      }
+      return;
+    }
+    if (state.triggered) return;
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter'){
+      e.preventDefault();
+      trigger(false);
+    }
+  });
+
+  // ---------- Tap-anywhere to trigger ----------
+  tapZone.addEventListener('click', function(){ if (!state.triggered) trigger(false); });
+  tapZone.addEventListener('touchstart', function(e){ if (!state.triggered){ e.preventDefault(); trigger(false); } }, { passive:false });
+
+  // ---------- Audio ambient ----------
+  var audioCtx = null, noiseGain = null;
+  function setAudioIcon(on){
+    audioBtn.classList.toggle('on', on);
+    if (on){
+      audioIcon.innerHTML = '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>';
+    } else {
+      audioIcon.innerHTML = '<path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    }
+  }
+  function ensureAudio(){
+    if (audioCtx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = new AC();
+    var sr = audioCtx.sampleRate;
+    var len = sr * 2;
+    var buf = audioCtx.createBuffer(1, len, sr);
+    var data = buf.getChannelData(0);
+    var lastOut = 0;
+    for (var i = 0; i < len; i++){
+      var w = Math.random()*2 - 1;
+      lastOut = (lastOut + 0.018*w) / 1.02;
+      data[i] = lastOut * 3.2;
+    }
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0;
+    src.connect(noiseGain).connect(audioCtx.destination);
+    src.start(0);
+  }
+  function toggleAudio(){
+    ensureAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var now = audioCtx.currentTime;
+    var on = (noiseGain.gain.value < 0.001);
+    var target = on ? 0.12 : 0;
+    noiseGain.gain.cancelScheduledValues(now);
+    noiseGain.gain.linearRampToValueAtTime(target, now + 0.5);
+    setAudioIcon(on);
+    LS.set('debos.audio', on ? 'on' : 'off');
+  }
+  setAudioIcon(false);
+  audioBtn.addEventListener('click', toggleAudio);
+  // Note: we don't auto-start audio even if preference is 'on' — browsers block autoplay.
+  // The saved state simply pre-selects the toggle position visually.
+  if (LS.get('debos.audio') === 'on') setAudioIcon(true);
+
+  // ---------- Prefetch hint: warm the next page ----------
+  var pf = document.createElement('link');
+  pf.rel = 'prefetch'; pf.href = CONFIG.NEXT_PAGE;
+  document.head.appendChild(pf);
+
+  // ---------- bfcache restore (browser back button from command.html) ----------
+  // If the browser restored this page from bfcache, wipe any inline opacities
+  // left behind by proceedToCommand() so the landing renders cleanly again.
+  window.addEventListener('pageshow', function(e){
+    if (!e.persisted) return;
+    pinWrap.style.opacity = '';
+    pinWrap.style.transition = '';
+    overlay.style.opacity = '';
+    overlay.style.transition = '';
+    if (state.pinOpen) closePin();
+    state.unlocked = false;
+  });
+
+})();
+</script>
+</body>
+</html>
