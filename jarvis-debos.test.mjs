@@ -149,6 +149,13 @@ console.log('\nA · subject page (no in-memory array — adapter writes storage)
   ok(env.sb.DEBOS.getCurrentTasks()[0].aliases.includes('l1'), '"L1 Kinematics" gets alias "l1"');
   ok(env.sb.DEBOS.getCurrentTasks()[2].type === 'pyq', 'PYQ-50 unit maps to type "pyq"');
 
+  // First-run discoverability hint (once per browser session, non-blocking).
+  await sleep(1950);
+  const notices = env.sb.document.body.children.filter(c => c.id === 'jarvis-notice');
+  ok(notices.length === 1 && /Captain/.test(notices[0].textContent),
+     'first-run hint names the wake word', 'got: ' + notices.map(n => n.textContent).join(''));
+  ok(env.sessionStorage.getItem('debos.jarvis.hinted') === '1', '  → flagged so it shows only once per session');
+
   env.spoken.length = 0;
   await say(env, 'start l1');
   ok(task(env, 't1').status === 'in-progress', '"start l1" → status in-progress', JSON.stringify(task(env, 't1')));

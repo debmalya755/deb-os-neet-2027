@@ -1295,6 +1295,11 @@
     simulate: function (text) { handleTranscript(String(text)); },
 
     say: speak,
+
+    // Show a small non-blocking message in the corner (never an alert). The
+    // DEB OS adapter uses this once per session to tell the user the wake word.
+    notify: function (text, persist) { notice(text, persist); return true; },
+
     on: function (fn) { if (typeof fn === 'function') listeners.push(fn); },
     off: function (fn) { listeners = listeners.filter(function (f) { return f !== fn; }); }
   };

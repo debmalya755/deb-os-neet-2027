@@ -329,6 +329,31 @@
     }
   };
 
+  /* ------------------------------------------------------------- first run --
+   * Once per browser session, after the engine has settled, show a quiet corner
+   * hint naming the wake word — otherwise a fresh tab gives no clue that voice
+   * control exists. Suppressed if the engine disabled itself (unsupported
+   * browser, mic denied, locked session), since it prints its own message then.
+   * The only thing stored is a "hint already shown" flag: no audio, no
+   * transcript, nothing about what was said.
+   * ---------------------------------------------------------------------- */
+  function maybeHint() {
+    if (global.JARVIS_DISABLED) return;
+    try {
+      if (sessionStorage.getItem('debos.jarvis.hinted') === '1') return;
+      sessionStorage.setItem('debos.jarvis.hinted', '1');
+    } catch (e) { return; }
+    setTimeout(function () {
+      var J = global.JARVIS;
+      if (!J || !J.notify) return;
+      if (J.getState().state === 'DISABLED') return;   // engine already spoke up
+      J.notify('Voice control is on. Say “Captain”, wait for “Yes, sir”, ' +
+               'then give a command — e.g. “start L1” or “mark complete”.');
+    }, 1800);
+  }
+  // jarvis.js loads after this file, so wait a tick for JARVIS to exist.
+  if (typeof setTimeout === 'function') setTimeout(maybeHint, 0);
+
   // Merge rather than overwrite, so a page can pre-define its own overrides.
   var existing = global.DEBOS || {};
   Object.keys(DEBOS).forEach(function (k) {
