@@ -737,15 +737,24 @@
   .tool-card:hover::after{opacity:1}
   .tool-card:active{transform:translateY(-1px)}
   .tool-mark{
-    width:42px;height:42px;
-    color:var(--accent-warm);
+    width:44px;height:44px;
+    color:var(--ink-primary);
     display:flex;align-items:center;justify-content:center;
-    filter:drop-shadow(0 0 10px rgba(0,245,255,.35));
+    filter:drop-shadow(0 0 8px rgba(0,245,255,.18));
     transition:transform .3s var(--ease),filter .3s var(--ease);
-    font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:.02em;
+    font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:.02em;
+    border-radius:8px;
+    overflow:hidden;
   }
   .tool-mark svg{width:100%;height:100%;display:block}
-  .tool-card:hover .tool-mark{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(0,245,255,.55))}
+  /* Brand-logo marks: light backdrop so a favicon with dark strokes stays visible on the dark card */
+  .tool-mark.brand{
+    background:#fbfbff;
+    border:1px solid rgba(0,0,0,.05);
+    padding:4px;
+  }
+  .tool-mark.brand img{width:100%;height:100%;object-fit:contain;display:block}
+  .tool-card:hover .tool-mark{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(0,245,255,.32))}
   .tool-body{margin-top:auto;display:flex;flex-direction:column;gap:4px}
   .tool-name{
     font-family:var(--font-body);font-weight:600;font-size:13px;
@@ -1096,18 +1105,10 @@
         </div>
       </a>
 
-      <!-- Claude (external, opens in new tab) -->
+      <!-- Claude — real logo fetched from Google's favicon CDN -->
       <a class="tool-card" href="https://claude.ai" target="_blank" rel="noopener noreferrer" aria-label="Open Claude">
-        <div class="tool-mark" aria-hidden="true">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none">
-              <line x1="50" y1="14" x2="50" y2="86"/>
-              <line x1="14" y1="50" x2="86" y2="50"/>
-              <line x1="24" y1="24" x2="76" y2="76"/>
-              <line x1="24" y1="76" x2="76" y2="24"/>
-            </g>
-            <circle cx="50" cy="50" r="6" fill="currentColor"/>
-          </svg>
+        <div class="tool-mark brand" aria-hidden="true">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=128" alt="" loading="lazy" width="44" height="44">
         </div>
         <div class="tool-body">
           <div class="tool-name">Claude</div>
@@ -1115,15 +1116,10 @@
         </div>
       </a>
 
-      <!-- Grok (external) -->
+      <!-- Grok -->
       <a class="tool-card" href="https://grok.com" target="_blank" rel="noopener noreferrer" aria-label="Open Grok">
-        <div class="tool-mark" aria-hidden="true">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="currentColor" stroke-width="10" stroke-linecap="square" fill="none">
-              <line x1="20" y1="20" x2="80" y2="80"/>
-              <line x1="80" y1="20" x2="20" y2="80"/>
-            </g>
-          </svg>
+        <div class="tool-mark brand" aria-hidden="true">
+          <img src="https://www.google.com/s2/favicons?domain=grok.com&sz=128" alt="" loading="lazy" width="44" height="44">
         </div>
         <div class="tool-body">
           <div class="tool-name">Grok</div>
@@ -1131,20 +1127,10 @@
         </div>
       </a>
 
-      <!-- ChatGPT (external) -->
+      <!-- ChatGPT -->
       <a class="tool-card" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT">
-        <div class="tool-mark" aria-hidden="true">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
-              <path d="M50 18 A 26 26 0 0 1 76 44"/>
-              <path d="M76 44 A 26 26 0 0 1 76 74"/>
-              <path d="M76 74 A 26 26 0 0 1 50 88"/>
-              <path d="M50 88 A 26 26 0 0 1 24 60"/>
-              <path d="M24 60 A 26 26 0 0 1 24 30"/>
-              <path d="M24 30 A 26 26 0 0 1 50 18"/>
-            </g>
-            <circle cx="50" cy="53" r="4" fill="currentColor"/>
-          </svg>
+        <div class="tool-mark brand" aria-hidden="true">
+          <img src="https://www.google.com/s2/favicons?domain=chatgpt.com&sz=128" alt="" loading="lazy" width="44" height="44">
         </div>
         <div class="tool-body">
           <div class="tool-name">ChatGPT</div>
@@ -1152,18 +1138,22 @@
         </div>
       </a>
 
-      <!-- PW / Physics Wallah (external) -->
+      <!-- PW / Physics Wallah -->
       <a class="tool-card" href="https://www.pw.live" target="_blank" rel="noopener noreferrer" aria-label="Open PW">
-        <div class="tool-mark" aria-hidden="true">PW</div>
+        <div class="tool-mark brand" aria-hidden="true">
+          <img src="https://www.google.com/s2/favicons?domain=pw.live&sz=128" alt="" loading="lazy" width="44" height="44">
+        </div>
         <div class="tool-body">
           <div class="tool-name">PW</div>
           <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
         </div>
       </a>
 
-      <!-- ALLEN (external) -->
+      <!-- ALLEN -->
       <a class="tool-card" href="https://www.allen.ac.in" target="_blank" rel="noopener noreferrer" aria-label="Open ALLEN">
-        <div class="tool-mark" aria-hidden="true">A</div>
+        <div class="tool-mark brand" aria-hidden="true">
+          <img src="https://www.google.com/s2/favicons?domain=allen.ac.in&sz=128" alt="" loading="lazy" width="44" height="44">
+        </div>
         <div class="tool-body">
           <div class="tool-name">ALLEN</div>
           <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
