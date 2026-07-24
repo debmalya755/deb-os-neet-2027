@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<!--
+  DEB OS — PHYSICS (physics.html)
+  Chapter dashboard for Physics. Two units: Class 11 (16) + Class 12 (14) = 30 chapters.
+  Each chapter has a custom inline SVG icon using currentColor so it tints per unit.
+  Dark-only theme; ambient white noise auto-starts on first user gesture.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="DEB OS Physics — 30-chapter tracker for Class 11 &amp; 12.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#060608">
+<title>Physics &mdash; DEB OS</title>
+<script>
+  (function(){ try{
+    document.documentElement.setAttribute('data-theme','dark');
+    var isReload = false;
+    try{
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') isReload = true;
+    }catch(_){}
+    if (!isReload && performance.navigation && performance.navigation.type === 1) isReload = true;
+    if (isReload) sessionStorage.removeItem('debos.session.unlocked');
+    if (sessionStorage.getItem('debos.session.unlocked') !== '1'){
+      window.location.replace('index.html');
+    }
+  }catch(e){} })();
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23060608'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%2300f5ff'/%3E%3Cg fill='none' stroke='%2300f5ff' stroke-width='2'%3E%3Cellipse cx='32' cy='32' rx='22' ry='9'/%3E%3Cellipse cx='32' cy='32' rx='22' ry='9' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='22' ry='9' transform='rotate(120 32 32)'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @view-transition{ navigation: auto; }
+  ::view-transition-old(root),::view-transition-new(root){ animation-duration:.4s; animation-timing-function:cubic-bezier(.22,1,.36,1); }
+  :root{
+    --font-display:'Chakra Petch',ui-monospace,monospace;
+    --font-body:'Chakra Petch',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --accent-warm:#00f5ff;
+    --accent-red:#ff3b5c;
+    --bg-deep:#060608;
+    --panel:linear-gradient(135deg,#0f0f14 0%,#0c0c10 100%);
+    --panel-border:rgba(0,245,255,.12);
+    --panel-shadow:0 4px 32px rgba(0,0,0,.6);
+    --ink-primary:#e8e8f0;
+    --ink-warm:#d2d2dc;
+    --ink-dim:#8a8a9c;
+    --ink-faint:#4c4c5c;
+    --border:rgba(255,255,255,.06);
+    --border-strong:rgba(0,245,255,.45);
+    --field-bg:rgba(255,255,255,.02);
+    --field-bg-active:rgba(0,245,255,.08);
+    --key-hover:rgba(0,245,255,.10);
+    --divider:rgba(255,255,255,.04);
+    --unit-11-primary:#00f5ff; --unit-11-rgb:0,245,255;
+    --unit-12-primary:#a78bfa; --unit-12-rgb:167,139,250;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg-deep);color:var(--ink-primary);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(0,245,255,.28);color:var(--ink-primary)}
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.55) transparent}
+  ::-webkit-scrollbar{width:10px;height:10px;background:transparent}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,.015);border-left:1px solid var(--divider)}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(0,245,255,.55),rgba(0,200,212,.35));border-radius:99px;border:2px solid transparent;background-clip:padding-box;box-shadow:inset 0 0 6px rgba(0,245,255,.45)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--accent-warm);background-clip:padding-box}
+  ::-webkit-scrollbar-corner{background:transparent}
+  .workspace{max-width:1400px;margin:0 auto;padding:44px 32px 60px}
+  main{display:flex;flex-direction:column;gap:44px}
+  .page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:14px;border-bottom:1px solid var(--divider);flex-wrap:wrap}
+  .hero-left{display:flex;flex-direction:column;gap:8px}
+  .breadcrumb{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .breadcrumb a{color:var(--ink-dim);transition:color .2s var(--ease)}
+  .breadcrumb a:hover{color:var(--accent-warm)}
+  .breadcrumb .sep{opacity:.4}
+  .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(38px,6vw,66px);letter-spacing:-.005em;line-height:1;text-transform:uppercase;color:var(--ink-primary);margin:0}
+  .page-title .accent{color:var(--accent-warm);filter:drop-shadow(0 0 22px rgba(0,245,255,.4))}
+  .hero-right{display:flex;gap:14px;flex-wrap:wrap}
+  .stat-chip{padding:10px 16px;background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;display:flex;flex-direction:column;gap:2px;min-width:120px;box-shadow:var(--panel-shadow);position:relative;overflow:hidden}
+  .stat-chip::before{content:'';position:absolute;left:14%;right:14%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent-warm),transparent);opacity:.5}
+  .stat-chip .k{font-family:var(--font-mono);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .stat-chip .v{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--ink-primary);letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+  .stat-chip .v .sub{font-size:12px;color:var(--ink-dim);font-weight:400;margin-left:4px}
+  .unit{display:flex;flex-direction:column;gap:22px}
+  .unit-11{--unit-primary:var(--unit-11-primary);--unit-rgb:var(--unit-11-rgb)}
+  .unit-12{--unit-primary:var(--unit-12-primary);--unit-rgb:var(--unit-12-rgb)}
+  .unit-head{display:flex;align-items:center;gap:20px;padding:22px 26px;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;box-shadow:var(--panel-shadow);position:relative;overflow:hidden;isolation:isolate}
+  .unit-head::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent 10%,var(--unit-primary) 50%,transparent 90%);opacity:.7}
+  .unit-head::after{content:'';position:absolute;inset:0;background:radial-gradient(600px 200px at 50% 100%,rgba(var(--unit-rgb),.08),transparent 70%);pointer-events:none;z-index:-1}
+  .unit-icon{width:66px;height:66px;flex:none;color:var(--unit-primary);filter:drop-shadow(0 0 16px rgba(var(--unit-rgb),.5));display:flex;align-items:center;justify-content:center;padding:8px;border:1px solid rgba(var(--unit-rgb),.35);border-radius:14px;background:rgba(var(--unit-rgb),.06);font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:.02em}
+  .unit-meta{display:flex;flex-direction:column;gap:4px;flex:1}
+  .unit-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--unit-primary);opacity:.9;font-weight:500}
+  .unit-name{font-family:var(--font-display);font-weight:700;font-size:32px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-primary);margin:0;line-height:1}
+  .unit-tag{font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);letter-spacing:.06em;margin-top:2px}
+  .unit-count{font-family:var(--font-display);font-weight:700;font-size:34px;color:var(--unit-primary);letter-spacing:.02em;text-shadow:0 0 14px rgba(var(--unit-rgb),.35);font-variant-numeric:tabular-nums;display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .unit-count .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-top:6px;text-shadow:none}
+  .chapter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+  .chapter-card{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:18px 16px 16px;background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;box-shadow:var(--panel-shadow);color:var(--ink-primary);min-height:160px;transition:transform .28s var(--ease),border-color .28s var(--ease),box-shadow .28s var(--ease);cursor:pointer;isolation:isolate;animation:fadeUp .35s var(--ease) backwards}
+  .chapter-card::before{content:'';position:absolute;left:14%;right:14%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--unit-primary),transparent);opacity:.5;transition:opacity .28s var(--ease)}
+  .chapter-card::after{content:'';position:absolute;inset:0;background:radial-gradient(220px 140px at 100% 100%,rgba(var(--unit-rgb),.10),transparent 70%);opacity:0;transition:opacity .28s var(--ease);pointer-events:none;z-index:-1}
+  .chapter-card:hover{transform:translateY(-3px);border-color:rgba(var(--unit-rgb),.5);box-shadow:var(--panel-shadow),0 0 22px rgba(var(--unit-rgb),.18)}
+  .chapter-card:hover::before{opacity:1}
+  .chapter-card:hover::after{opacity:1}
+  .chapter-card:active{transform:translateY(-1px)}
+  .ch-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .ch-icon{width:44px;height:44px;flex:none;color:var(--unit-primary);filter:drop-shadow(0 0 10px rgba(var(--unit-rgb),.35));transition:transform .3s var(--ease),filter .3s var(--ease)}
+  .ch-icon svg{width:100%;height:100%;display:block}
+  .chapter-card:hover .ch-icon{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(var(--unit-rgb),.55))}
+  .ch-num{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.14em;color:var(--ink-faint);font-variant-numeric:tabular-nums;background:var(--field-bg);padding:3px 8px;border-radius:99px;border:1px solid var(--border)}
+  .ch-name{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:var(--ink-primary);letter-spacing:.01em;line-height:1.28;margin-top:auto}
+  .ch-open{font-family:var(--font-mono);font-size:8.5px;color:var(--unit-primary);letter-spacing:.3em;text-transform:uppercase;font-weight:500;display:inline-flex;align-items:center;gap:5px;opacity:.75;transition:gap .22s var(--ease),opacity .22s var(--ease)}
+  .chapter-card:hover .ch-open{gap:8px;opacity:1}
+  @media (max-width:960px){.workspace{padding:32px 20px 44px}.unit-head{flex-wrap:wrap}.chapter-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.chapter-card{min-height:140px;padding:14px 12px}.ch-icon{width:38px;height:38px}.ch-name{font-size:12.5px}}
+  @media (max-width:640px){.chapter-grid{grid-template-columns:repeat(2,1fr);gap:10px}.chapter-card{min-height:130px}.page-title{font-size:36px}}
+  footer{max-width:1400px;margin:60px auto 0;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--divider);font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  footer a{color:var(--ink-dim);transition:color .2s var(--ease)}
+  footer a:hover{color:var(--accent-warm)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="workspace">
+<main>
+
+  <header class="page-hero">
+    <div class="hero-left">
+      <div class="breadcrumb">
+        <a href="command.html">&larr; Command</a>
+        <span class="sep">/</span>
+        <span>Subjects</span>
+        <span class="sep">/</span>
+        <span>Physics</span>
+      </div>
+      <h1 class="page-title"><span class="accent">Phys</span>ics</h1>
+      <div class="unit-tag">30 chapters &middot; 16 in Class 11 + 14 in Class 12</div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-chip"><span class="k">Completed</span><span class="v" id="doneN">0<span class="sub">/30</span></span></div>
+      <div class="stat-chip"><span class="k">In progress</span><span class="v" id="progN">0</span></div>
+      <div class="stat-chip"><span class="k">Untouched</span><span class="v" id="untN">30</span></div>
+    </div>
+  </header>
+
+  <section class="unit unit-11">
+    <div class="unit-head">
+      <div class="unit-icon">11</div>
+      <div class="unit-meta">
+        <div class="unit-eyebrow">Unit I</div>
+        <h2 class="unit-name">Class 11 Physics</h2>
+        <div class="unit-tag">Mechanics &middot; thermal &middot; waves</div>
+      </div>
+      <div class="unit-count">16<span class="lbl">Chapters</span></div>
+    </div>
+    <div class="chapter-grid" id="grid11"></div>
+  </section>
+
+  <section class="unit unit-12">
+    <div class="unit-head">
+      <div class="unit-icon">12</div>
+      <div class="unit-meta">
+        <div class="unit-eyebrow">Unit II</div>
+        <h2 class="unit-name">Class 12 Physics</h2>
+        <div class="unit-tag">Electromagnetism &middot; optics &middot; modern</div>
+      </div>
+      <div class="unit-count">14<span class="lbl">Chapters</span></div>
+    </div>
+    <div class="chapter-grid" id="grid12"></div>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  <span>DEB OS &middot; Physics &middot; v0.1</span>
+  <span><a href="command.html">&larr; Return to command</a></span>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  /* Ambient white noise — always on, auto-starts on first user gesture */
+  var _actx=null,_ng=null;
+  function _ensureA(){ if(_actx)return; var AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    _actx=new AC(); var sr=_actx.sampleRate,len=sr*2, buf=_actx.createBuffer(1,len,sr), d=buf.getChannelData(0), l=0;
+    for(var i=0;i<len;i++){var w=Math.random()*2-1;l=(l+0.018*w)/1.02;d[i]=l*3.2;}
+    var s=_actx.createBufferSource(); s.buffer=buf; s.loop=true; _ng=_actx.createGain(); _ng.gain.value=0;
+    s.connect(_ng).connect(_actx.destination); s.start(0); }
+  function _kickA(){ _ensureA(); if(!_actx)return; if(_actx.state==='suspended')_actx.resume();
+    var t=_actx.currentTime; _ng.gain.cancelScheduledValues(t); _ng.gain.linearRampToValueAtTime(0.10,t+0.8);
+    document.removeEventListener('click',_kickA,true); document.removeEventListener('keydown',_kickA,true); document.removeEventListener('touchstart',_kickA,true); }
+  document.addEventListener('click',_kickA,true); document.addEventListener('keydown',_kickA,true); document.addEventListener('touchstart',_kickA,true);
+
+  var ICON = {
+    // ===== Class 11 =====
+    'basic-maths':'<rect x="24" y="20" width="30" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="28" y="24" width="22" height="10" rx="2" fill="currentColor" opacity=".25"/><g fill="currentColor"><circle cx="31" cy="42" r="2"/><circle cx="39" cy="42" r="2"/><circle cx="47" cy="42" r="2"/><circle cx="31" cy="52" r="2"/><circle cx="39" cy="52" r="2"/><circle cx="47" cy="52" r="2"/></g><path d="M62 24 Q72 24 74 34 Q74 48 66 56 Q64 66 72 68" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>',
+    'vectors':'<line x1="16" y1="82" x2="88" y2="82" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="88,82 80,78 80,86" fill="currentColor"/><line x1="16" y1="82" x2="16" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="16,14 12,22 20,22" fill="currentColor"/><line x1="16" y1="82" x2="68" y2="30" stroke="currentColor" stroke-width="3" stroke-dasharray="4 4" stroke-linecap="round"/><polygon points="68,30 60,32 66,38" fill="currentColor"/>',
+    'units':'<rect x="14" y="60" width="60" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><g stroke="currentColor" stroke-width="1.5"><line x1="22" y1="60" x2="22" y2="66"/><line x1="30" y1="60" x2="30" y2="68"/><line x1="38" y1="60" x2="38" y2="66"/><line x1="46" y1="60" x2="46" y2="68"/><line x1="54" y1="60" x2="54" y2="66"/><line x1="62" y1="60" x2="62" y2="68"/></g><circle cx="72" cy="30" r="14" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="72" y1="30" x2="72" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="72" y1="30" x2="80" y2="30" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="68" y="12" width="8" height="4" rx="1" fill="currentColor"/>',
+    'motion-line':'<rect x="30" y="48" width="40" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M36 48 L 40 40 L 60 40 L 64 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="40" cy="70" r="4" fill="currentColor"/><circle cx="60" cy="70" r="4" fill="currentColor"/><line x1="8" y1="52" x2="24" y2="52" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="4" y1="60" x2="24" y2="60" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="68" x2="24" y2="68" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    'motion-plane':'<line x1="12" y1="86" x2="88" y2="86" stroke="currentColor" stroke-width="2"/><path d="M12 82 Q 50 12 88 82" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 4"/><circle cx="12" cy="82" r="4" fill="currentColor"/><circle cx="88" cy="82" r="4" fill="currentColor"/><circle cx="50" cy="22" r="4" fill="currentColor"/>',
+    'laws':'<rect x="22" y="52" width="30" height="24" rx="2" fill="currentColor"/><line x1="18" y1="80" x2="60" y2="80" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/><line x1="58" y1="64" x2="82" y2="64" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="82,64 74,58 74,70" fill="currentColor"/>',
+    'work-energy':'<circle cx="50" cy="52" r="32" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M50 26 L 40 54 L 50 54 L 42 78 L 62 48 L 52 48 L 60 26 Z" fill="currentColor"/>',
+    'com':'<circle cx="50" cy="52" r="34" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="35" cy="42" r="4" fill="currentColor"/><circle cx="62" cy="38" r="5" fill="currentColor"/><circle cx="40" cy="66" r="3" fill="currentColor"/><circle cx="66" cy="62" r="4" fill="currentColor"/><line x1="44" y1="52" x2="56" y2="52" stroke="currentColor" stroke-width="1.5"/><line x1="50" y1="46" x2="50" y2="58" stroke="currentColor" stroke-width="1.5"/><circle cx="50" cy="52" r="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>',
+    'rotational':'<circle cx="50" cy="52" r="6" fill="currentColor"/><line x1="50" y1="52" x2="50" y2="14" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 3" stroke-linecap="round"/><circle cx="50" cy="52" r="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 4"/><path d="M76 52 A 26 26 0 0 1 66 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><polygon points="66,72 58,66 62,76" fill="currentColor"/>',
+    'gravitation':'<g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 68 Q 50 44 90 68"/><path d="M10 76 Q 50 54 90 76"/><path d="M10 84 Q 50 66 90 84"/></g><circle cx="50" cy="30" r="9" fill="currentColor"/><path d="M50 22 L 52 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="50" y1="40" x2="50" y2="58" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 3"/>',
+    'fluids':'<path d="M22 20 L 22 82 L 78 82 L 78 20" fill="none" stroke="currentColor" stroke-width="2.5"/><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M26 50 Q 34 46 42 50 T 58 50 T 74 50"/><path d="M26 60 Q 34 56 42 60 T 58 60 T 74 60"/><path d="M26 70 Q 34 66 42 70 T 58 70 T 74 70"/></g>',
+    'solids':'<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="22" y="34" width="40" height="40"/><rect x="34" y="22" width="40" height="40"/><line x1="22" y1="34" x2="34" y2="22"/><line x1="62" y1="34" x2="74" y2="22"/><line x1="22" y1="74" x2="34" y2="62"/><line x1="62" y1="74" x2="74" y2="62"/></g><g fill="currentColor"><circle cx="22" cy="34" r="3"/><circle cx="62" cy="34" r="3"/><circle cx="22" cy="74" r="3"/><circle cx="62" cy="74" r="3"/><circle cx="34" cy="22" r="3"/><circle cx="74" cy="22" r="3"/><circle cx="34" cy="62" r="3"/><circle cx="74" cy="62" r="3"/></g>',
+    'thermal':'<rect x="42" y="18" width="10" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="44" y="32" width="6" height="32" fill="currentColor"/><circle cx="47" cy="76" r="9" fill="currentColor"/><line x1="54" y1="26" x2="60" y2="26" stroke="currentColor" stroke-width="1.5"/><line x1="54" y1="36" x2="58" y2="36" stroke="currentColor" stroke-width="1.5"/><line x1="54" y1="46" x2="60" y2="46" stroke="currentColor" stroke-width="1.5"/><line x1="54" y1="56" x2="58" y2="56" stroke="currentColor" stroke-width="1.5"/><circle cx="72" cy="46" r="2" fill="currentColor" opacity=".7"/><circle cx="80" cy="38" r="2" fill="currentColor" opacity=".7"/>',
+    'ktg':'<rect x="30" y="30" width="24" height="44" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="32" y="18" width="20" height="12" fill="currentColor"/><line x1="42" y1="16" x2="42" y2="6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M64 76 Q 60 62 68 56 Q 76 62 72 76 Q 68 80 64 76 Z" fill="currentColor"/>',
+    'oscillations':'<line x1="30" y1="18" x2="70" y2="18" stroke="currentColor" stroke-width="2"/><line x1="50" y1="18" x2="34" y2="70" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="34" cy="70" r="8" fill="currentColor"/><line x1="50" y1="18" x2="66" y2="70" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round" opacity=".5"/><circle cx="66" cy="70" r="6" fill="currentColor" opacity=".4"/>',
+    'waves':'<path d="M8 52 Q 22 22 36 52 T 64 52 T 92 52" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+    // ===== Class 12 =====
+    'electric-charges':'<g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="30" cy="50" r="9"/><line x1="25" y1="50" x2="35" y2="50"/><line x1="30" y1="45" x2="30" y2="55"/><circle cx="70" cy="50" r="9"/><line x1="65" y1="50" x2="75" y2="50"/><path d="M40 32 Q 50 22 60 32" stroke-dasharray="3 3"/><path d="M40 68 Q 50 78 60 68" stroke-dasharray="3 3"/><path d="M40 42 Q 50 34 60 42" stroke-dasharray="3 3"/><path d="M40 58 Q 50 66 60 58" stroke-dasharray="3 3"/></g>',
+    'capacitance':'<line x1="20" y1="50" x2="42" y2="50" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="58" y1="50" x2="80" y2="50" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="42" y1="26" x2="42" y2="74" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><line x1="58" y1="26" x2="58" y2="74" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><g stroke="currentColor" stroke-width="1.5"><line x1="12" y1="42" x2="20" y2="42"/><line x1="12" y1="46" x2="20" y2="46"/><line x1="80" y1="54" x2="88" y2="54"/><line x1="80" y1="58" x2="88" y2="58"/></g>',
+    'current-electricity':'<rect x="14" y="26" width="72" height="48" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M28 26 L 30 20 L 36 32 L 42 20 L 48 32 L 54 20 L 60 32 L 66 20 L 70 26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="74" cy="72" r="3" fill="currentColor"/>',
+    'moving-charges':'<circle cx="50" cy="50" r="7" fill="currentColor"/><line x1="46" y1="50" x2="54" y2="50" stroke="#060608" stroke-width="1.5"/><line x1="50" y1="46" x2="50" y2="54" stroke="#060608" stroke-width="1.5"/><circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/><path d="M76 50 A 26 26 0 0 1 66 70" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><polygon points="66,70 58,64 62,74" fill="currentColor"/>',
+    'magnetism':'<rect x="18" y="42" width="64" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="18" y="42" width="32" height="20" fill="currentColor"/><g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M14 32 Q 50 10 86 32" stroke-dasharray="3 3"/><path d="M14 72 Q 50 92 86 72" stroke-dasharray="3 3"/></g>',
+    'em-induction':'<g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><ellipse cx="30" cy="30" rx="12" ry="6"/><ellipse cx="30" cy="42" rx="12" ry="6"/><ellipse cx="30" cy="54" rx="12" ry="6"/><ellipse cx="30" cy="66" rx="12" ry="6"/></g><line x1="42" y1="48" x2="60" y2="48" stroke="currentColor" stroke-width="2"/><circle cx="72" cy="48" r="14" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="72" y1="48" x2="66" y2="40" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="72" cy="48" r="2" fill="currentColor"/>',
+    'alternating-current':'<circle cx="50" cy="52" r="34" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M22 52 Q 32 32 42 52 T 62 52 T 82 52" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="22" cy="52" r="3" fill="currentColor"/><polygon points="82,52 74,48 74,56" fill="currentColor"/>',
+    'em-waves':'<line x1="50" y1="80" x2="50" y2="46" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="80" r="4" fill="currentColor"/><line x1="50" y1="46" x2="42" y2="34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="46" x2="58" y2="34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M32 28 A 22 22 0 0 1 68 28" fill="none" stroke="currentColor" stroke-width="2"/><path d="M22 20 A 32 32 0 0 1 78 20" fill="none" stroke="currentColor" stroke-width="2" opacity=".6"/><path d="M12 12 A 42 42 0 0 1 88 12" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"/>',
+    'ray-optics':'<polygon points="30,72 70,72 50,26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><line x1="10" y1="50" x2="30" y2="50" stroke="currentColor" stroke-width="2"/><g stroke-width="2" stroke-linecap="round" fill="none"><line x1="70" y1="46" x2="90" y2="30" stroke="#ff3b5c"/><line x1="70" y1="50" x2="90" y2="42" stroke="#ffa53b"/><line x1="70" y1="54" x2="90" y2="54" stroke="#ffea3b"/><line x1="70" y1="58" x2="90" y2="66" stroke="#4dd0a0"/><line x1="70" y1="62" x2="90" y2="78" stroke="#00f5ff"/></g>',
+    'wave-optics':'<g stroke="currentColor" stroke-linecap="round"><line x1="18" y1="18" x2="18" y2="82" stroke-width="3.5"/><line x1="34" y1="22" x2="34" y2="78" stroke-width="2" opacity=".55"/><line x1="50" y1="18" x2="50" y2="82" stroke-width="3.5"/><line x1="66" y1="22" x2="66" y2="78" stroke-width="2" opacity=".55"/><line x1="82" y1="18" x2="82" y2="82" stroke-width="3.5"/></g>',
+    'dual-nature':'<rect x="18" y="30" width="32" height="40" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="34" cy="50" r="5" fill="currentColor"/><path d="M56 50 Q 62 34 70 50 T 86 50" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>',
+    'atoms':'<circle cx="50" cy="52" r="6" fill="currentColor"/><g fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="50" cy="52" rx="34" ry="12"/><ellipse cx="50" cy="52" rx="34" ry="12" transform="rotate(60 50 52)"/><ellipse cx="50" cy="52" rx="34" ry="12" transform="rotate(120 50 52)"/></g><circle cx="18" cy="52" r="3" fill="currentColor"/><circle cx="66" cy="30" r="3" fill="currentColor"/><circle cx="66" cy="74" r="3" fill="currentColor"/>',
+    'nuclei':'<g fill="currentColor"><circle cx="40" cy="42" r="10"/><circle cx="60" cy="42" r="10"/><circle cx="35" cy="60" r="10" opacity=".55"/><circle cx="55" cy="60" r="10" opacity=".55"/><circle cx="50" cy="52" r="9"/></g>',
+    'semiconductors':'<polygon points="30,28 30,72 62,50" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><line x1="62" y1="26" x2="62" y2="74" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="50" x2="30" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="62" y1="50" x2="88" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+  };
+
+  var CLASS_11 = [
+    {n:1,name:'Basic Maths and Calculus',icon:'basic-maths'},
+    {n:2,name:'Vectors',icon:'vectors'},
+    {n:3,name:'Units and Measurements',icon:'units'},
+    {n:4,name:'Motion in a Straight Line',icon:'motion-line'},
+    {n:5,name:'Motion in a Plane',icon:'motion-plane'},
+    {n:6,name:'Laws of Motion',icon:'laws'},
+    {n:7,name:'Work, Energy and Power',icon:'work-energy'},
+    {n:8,name:'Center of Mass and System of Particles',icon:'com'},
+    {n:9,name:'Rotational Motion',icon:'rotational'},
+    {n:10,name:'Gravitation',icon:'gravitation'},
+    {n:11,name:'Mechanical Properties of Fluids',icon:'fluids'},
+    {n:12,name:'Mechanical Properties of Solids',icon:'solids'},
+    {n:13,name:'Thermal Properties of Matter',icon:'thermal'},
+    {n:14,name:'KTG and Thermodynamics',icon:'ktg'},
+    {n:15,name:'Oscillations',icon:'oscillations'},
+    {n:16,name:'Waves',icon:'waves'}
+  ];
+  var CLASS_12 = [
+    {n:1,name:'Electric Charges and Fields',icon:'electric-charges'},
+    {n:2,name:'Electrostatic Potential and Capacitance',icon:'capacitance'},
+    {n:3,name:'Current Electricity',icon:'current-electricity'},
+    {n:4,name:'Moving Charges and Magnetism',icon:'moving-charges'},
+    {n:5,name:'Magnetism and Matter',icon:'magnetism'},
+    {n:6,name:'Electromagnetic Induction',icon:'em-induction'},
+    {n:7,name:'Alternating Current',icon:'alternating-current'},
+    {n:8,name:'Electromagnetic Waves',icon:'em-waves'},
+    {n:9,name:'Ray Optics and Optical Instruments',icon:'ray-optics'},
+    {n:10,name:'Wave Optics',icon:'wave-optics'},
+    {n:11,name:'Dual Nature of Radiation and Matter',icon:'dual-nature'},
+    {n:12,name:'Atoms',icon:'atoms'},
+    {n:13,name:'Nuclei',icon:'nuclei'},
+    {n:14,name:'Semiconductor Electronics',icon:'semiconductors'}
+  ];
+
+  function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+  function makeCard(unitKey, ch, i){
+    var iconMarkup = ICON[ch.icon] || '<circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" stroke-width="2"/>';
+    var num = String(ch.n).padStart(2,'0');
+    var a = document.createElement('a');
+    a.className='chapter-card';
+    a.href = 'physics/' + unitKey + '/' + slug(ch.name) + '.html';
+    a.setAttribute('aria-label','Open chapter '+ch.n+': '+ch.name);
+    a.style.animationDelay = (i*30)+'ms';
+    a.innerHTML =
+      '<div class="ch-top">'+
+        '<div class="ch-icon"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'+iconMarkup+'</svg></div>'+
+        '<span class="ch-num">'+num+'</span>'+
+      '</div>'+
+      '<div class="ch-name">'+ch.name+'</div>'+
+      '<div class="ch-open">Open <span aria-hidden="true">&rarr;</span></div>';
+    a.addEventListener('click', function(e){ e.preventDefault(); });
+    return a;
+  }
+  var g11=document.getElementById('grid11'), g12=document.getElementById('grid12');
+  CLASS_11.forEach(function(ch,i){ g11.appendChild(makeCard('class-11',ch,i)); });
+  CLASS_12.forEach(function(ch,i){ g12.appendChild(makeCard('class-12',ch,i)); });
+
+  var progress = (function(){ try{ return JSON.parse(localStorage.getItem('debos.physics.progress')||'{}'); }catch(e){ return {}; } })();
+  var done=0, prog=0;
+  Object.keys(progress).forEach(function(k){ if(progress[k]==='done') done++; else if(progress[k]==='in-progress') prog++; });
+  document.getElementById('doneN').innerHTML = done + '<span class="sub">/30</span>';
+  document.getElementById('progN').textContent = prog;
+  document.getElementById('untN').textContent = (30 - done - prog);
+
+  window.addEventListener('pageshow', function(e){
+    if (e.persisted && sessionStorage.getItem('debos.session.unlocked') !== '1') window.location.replace('index.html');
+  });
+})();
+</script>
+</body>
+</html>

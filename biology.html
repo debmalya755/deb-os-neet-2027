@@ -76,30 +76,6 @@
     --divider:rgba(255,255,255,.04);
     --nav-bg:rgba(6,6,8,.78);
   }
-  html[data-theme="light"]{
-    --bg-deep:#f0ede6;
-    --bg-mid:#e8e4dc;
-    --panel:linear-gradient(135deg,#faf8f4 0%,#f0ece4 100%);
-    --panel-border:rgba(0,60,140,.14);
-    --panel-shadow:0 2px 20px rgba(0,0,0,.09);
-    --ink-primary:#12121a;
-    --ink-warm:#26262f;
-    --ink-dim:#6b6570;
-    --ink-faint:#a8a49c;
-    --border:rgba(0,0,0,.08);
-    --border-strong:rgba(0,60,140,.4);
-    --field-bg:rgba(0,60,140,.03);
-    --field-bg-active:rgba(0,60,140,.10);
-    --key-hover:rgba(0,60,140,.10);
-    --divider:rgba(0,0,0,.06);
-    --nav-bg:rgba(240,237,230,.85);
-    --accent-warm:#003c8c;
-    --botany-primary:#2d7a2b;
-    --botany-rgb:45,122,43;
-    --zoology-primary:#1e5aa3;
-    --zoology-rgb:30,90,163;
-  }
-
   /* ---------- Reset ---------- */
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg-deep);color:var(--ink-primary);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh}
@@ -107,19 +83,13 @@
   ::selection{background:rgba(0,245,255,.28);color:var(--ink-primary)}
 
   /* ---------- Themed scrollbars ---------- */
-  *{scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.55) transparent}
-  html[data-theme="light"] *{scrollbar-color:rgba(0,60,140,.55) transparent}
-  ::-webkit-scrollbar{width:10px;height:10px;background:transparent}
-  ::-webkit-scrollbar-track{background:rgba(255,255,255,.015);border-left:1px solid var(--divider)}
-  html[data-theme="light"] ::-webkit-scrollbar-track{background:rgba(0,0,0,.025)}
-  ::-webkit-scrollbar-thumb{
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.55) transparent}  ::-webkit-scrollbar{width:10px;height:10px;background:transparent}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,.015);border-left:1px solid var(--divider)}  ::-webkit-scrollbar-thumb{
     background:linear-gradient(180deg,rgba(0,245,255,.55),rgba(0,200,212,.35));
     border-radius:99px;border:2px solid transparent;background-clip:padding-box;
     box-shadow:inset 0 0 6px rgba(0,245,255,.45);
   }
-  ::-webkit-scrollbar-thumb:hover{background:var(--accent-warm);background-clip:padding-box;box-shadow:inset 0 0 8px rgba(0,245,255,.65),0 0 14px rgba(0,245,255,.4)}
-  html[data-theme="light"] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(0,60,140,.55),rgba(0,40,110,.35));background-clip:padding-box}
-  ::-webkit-scrollbar-corner{background:transparent}
+  ::-webkit-scrollbar-thumb:hover{background:var(--accent-warm);background-clip:padding-box;box-shadow:inset 0 0 8px rgba(0,245,255,.65),0 0 14px rgba(0,245,255,.4)}  ::-webkit-scrollbar-corner{background:transparent}
 
   /* ---------- Nav ---------- */
   .nav{
@@ -139,9 +109,6 @@
   .nav-links a.active{color:var(--accent-warm);text-shadow:0 0 12px rgba(0,245,255,.4)}
   .nav-right{display:flex;align-items:center;gap:18px;font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-dim)}
   .clock{font-size:15px;color:var(--ink-warm);letter-spacing:.06em;font-variant-numeric:tabular-nums;font-weight:500}
-  .theme-btn{width:36px;height:36px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .22s var(--ease)}
-  .theme-btn:hover{border-color:var(--border-strong);color:var(--accent-warm);background:var(--field-bg-active)}
-  .theme-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
   /* ---------- Layout ---------- */
   .workspace{max-width:1400px;margin:0 auto;padding:44px 32px 60px}
@@ -155,9 +122,7 @@
   .breadcrumb a:hover{color:var(--accent-warm)}
   .breadcrumb .sep{opacity:.4}
   .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(38px,6vw,66px);letter-spacing:-.005em;line-height:1;text-transform:uppercase;color:var(--ink-primary);margin:0}
-  .page-title .accent{color:var(--accent-green);filter:drop-shadow(0 0 22px rgba(77,208,160,.35))}
-  html[data-theme="light"] .page-title .accent{color:#2d7a2b;filter:drop-shadow(0 0 18px rgba(45,122,43,.3))}
-  .hero-right{display:flex;gap:14px;flex-wrap:wrap}
+  .page-title .accent{color:var(--accent-green);filter:drop-shadow(0 0 22px rgba(77,208,160,.35))}  .hero-right{display:flex;gap:14px;flex-wrap:wrap}
   .stat-chip{
     padding:10px 16px;
     background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
@@ -336,10 +301,7 @@
   </div>
   <div class="nav-right">
     <span class="clock" id="clock">--:--</span>
-    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">
-      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-  </div>
+    </div>
 </nav>
 
 <div class="workspace">
@@ -443,21 +405,8 @@
   };
 
   // ---------- Theme toggle ----------
-  var themeBtn = document.getElementById('themeBtn');
-  var themeIcon = document.getElementById('themeIcon');
-  function applyTheme(t){
-    document.documentElement.setAttribute('data-theme', t);
-    LS.set('debos.theme', t);
-    if (t === 'dark'){
-      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    } else {
-      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
-    }
-  }
-  applyTheme(LS.get('debos.theme','dark'));
-  themeBtn.addEventListener('click', function(){
-    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  });
+  // Theme is dark-only — no toggle.
+  document.documentElement.setAttribute('data-theme', 'dark');
 
   // ---------- Clock ----------
   var clockEl = document.getElementById('clock');

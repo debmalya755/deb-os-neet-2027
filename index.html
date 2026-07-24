@@ -85,9 +85,6 @@
     --accent-warm: #00f5ff;
     --accent-warm-2: #00c8d4;
     --accent-glow: rgba(0,245,255,.45);
-    --accent-claude: #d97757;   /* Claude brand — intentionally preserved */
-    --accent-grok: #d2d6e1;     /* Grok neutral — intentionally preserved */
-
     --focus: rgba(0,245,255,.85);
   }
   html[data-theme="dark"]{
@@ -110,32 +107,6 @@
     --key-hover: rgba(0,245,255,.10);
     --error: #ff3b5c;
   }
-  html[data-theme="light"]{
-    --bg-deep: #f0ede6;
-    --bg-mid: #e8e4dc;
-    --bg-warm: #faf8f4;
-    --panel: linear-gradient(135deg, #faf8f4 0%, #f0ece4 100%);
-    --panel-border: rgba(0,60,140,.14);
-    --panel-shadow: 0 2px 20px rgba(0,0,0,.09), inset 0 1px 0 rgba(255,255,255,.7);
-    --ink-primary: #12121a;
-    --ink-warm: #26262f;
-    --ink-dim: #6b6570;
-    --ink-faint: #a8a49c;
-    --sub: #4a4550;
-    --border: rgba(0,0,0,.08);
-    --border-strong: rgba(0,60,140,.4);
-    --field-bg: rgba(0,60,140,.03);
-    --field-bg-active: rgba(0,60,140,.10);
-    --key-bg: rgba(0,60,140,.04);
-    --key-hover: rgba(0,60,140,.10);
-    --error: #c72d3d;
-    /* Light-mode accent shifts from cyan to deep sapphire — same as command.html light theme. */
-    --accent-warm: #003c8c;
-    --accent-warm-2: #00478f;
-    --accent-glow: rgba(0,60,140,.35);
-    --focus: rgba(0,60,140,.85);
-  }
-
   /* ---------- Reset / base ---------- */
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg-deep);overflow:hidden;font-family:var(--font-body);color:var(--ink-primary);-webkit-font-smoothing:antialiased}
@@ -156,7 +127,6 @@
   #bh{position:absolute;inset:0;width:100%;height:100%;display:block;will-change:opacity;z-index:1}
   #ambient{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease);z-index:3}
   .overlay-backdrop{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 50%, rgba(8,4,2,.5) 0%, rgba(3,2,6,.85) 70%);opacity:0;transition:opacity 1.2s var(--ease);pointer-events:none;z-index:2}
-  html[data-theme="light"] .overlay-backdrop{background:radial-gradient(ellipse 90% 70% at 50% 50%, rgba(220,235,255,.4) 0%, rgba(240,237,230,.85) 70%)}
 
   /* Big invisible tap zone during intro */
   .tap-zone{position:absolute;inset:0;z-index:4;cursor:pointer;background:transparent}
@@ -199,31 +169,21 @@
   .overlay.on{opacity:1;transform:translateY(0);pointer-events:auto}
   .overlay .kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.5em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:22px;text-indent:.5em}
   .overlay .kicker::before,.overlay .kicker::after{content:'';display:inline-block;width:22px;height:1px;background:var(--ink-faint);vertical-align:middle;margin:0 12px;opacity:.7}
-  .overlay h1{margin:0;font-weight:700;font-size:clamp(64px,13vw,168px);line-height:.9;letter-spacing:-.02em;background:linear-gradient(180deg,var(--ink-primary) 0%, var(--accent-warm) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 42px rgba(0,245,255,.24))}
-  html[data-theme="light"] .overlay h1{filter:drop-shadow(0 0 22px rgba(0,60,140,.28))}
-  .overlay .tagline{margin:20px 0 0;font-family:var(--font-serif);font-style:italic;font-size:clamp(20px,2.7vw,30px);color:var(--ink-warm);font-weight:400;letter-spacing:.01em}
+  .overlay h1{margin:0;font-weight:700;font-size:clamp(64px,13vw,168px);line-height:.9;letter-spacing:-.02em;background:linear-gradient(180deg,var(--ink-primary) 0%, var(--accent-warm) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 42px rgba(0,245,255,.24))}  .overlay .tagline{margin:20px 0 0;font-family:var(--font-serif);font-style:italic;font-size:clamp(20px,2.7vw,30px);color:var(--ink-warm);font-weight:400;letter-spacing:.01em}
   .divider{margin:34px 0 6px;width:56px;height:1px;background:linear-gradient(90deg,transparent,var(--accent-warm),transparent);opacity:.7}
   .actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;margin-top:36px}
 
   .btn{display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 26px;border-radius:14px;font-size:17px;font-weight:500;letter-spacing:.01em;transition:transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease), border-color .3s var(--ease);cursor:pointer;border:1px solid;text-decoration:none;-webkit-tap-highlight-color:transparent}
-  .btn-claude{background:rgba(217,119,87,.1);border-color:rgba(217,119,87,.5);color:#f6e2d8}
-  html[data-theme="light"] .btn-claude{background:rgba(217,119,87,.14);color:#5a2416}
-  .btn-grok{background:rgba(240,236,245,.05);border-color:rgba(210,214,225,.32);color:#f0f0f5}
-  html[data-theme="light"] .btn-grok{background:rgba(0,20,40,.04);border-color:rgba(0,20,40,.22);color:#26262f}
   .btn-primary{padding:0 30px;background:linear-gradient(180deg,var(--accent-warm),var(--accent-warm-2));border-color:rgba(120,240,255,.55);color:#001a20;font-weight:600;box-shadow:0 10px 30px rgba(0,245,255,.35)}
   .arrow{font-size:19px;line-height:1;transition:transform .3s var(--ease);display:inline-block}
   @media (hover:hover){
-    .btn-claude:hover{background:rgba(217,119,87,.2);border-color:rgba(217,119,87,.85);transform:translateY(-2px);box-shadow:0 12px 30px rgba(217,119,87,.28)}
-    .btn-grok:hover{background:rgba(240,236,245,.11);border-color:rgba(210,214,225,.6);transform:translateY(-2px);box-shadow:0 12px 30px rgba(160,170,190,.16)}
     .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 42px rgba(0,245,255,.55)}
     .btn-primary:hover .arrow{transform:translateX(5px)}
   }
   .btn:active{transform:translateY(0) scale(.985)}
 
   /* ---------- PIN modal ---------- */
-  .pin-wrap{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .35s ease;background:rgba(4,2,6,.74);backdrop-filter:blur(2px);cursor:pointer}
-  html[data-theme="light"] .pin-wrap{background:rgba(230,215,190,.72)}
-  .pin-wrap.on{opacity:1;pointer-events:auto}
+  .pin-wrap{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .35s ease;background:rgba(4,2,6,.74);backdrop-filter:blur(2px);cursor:pointer}  .pin-wrap.on{opacity:1;pointer-events:auto}
   .pin-card{width:360px;max-width:100%;padding:32px 30px 26px;border-radius:20px;transform:scale(.96);opacity:0;background:var(--panel);border:1px solid var(--panel-border);box-shadow:var(--panel-shadow);text-align:center;transition:transform .5s var(--ease), opacity .5s var(--ease), height .45s var(--ease);overflow:hidden;cursor:default}
   .pin-wrap.on .pin-card{transform:scale(1);opacity:1}
 
@@ -263,9 +223,7 @@
   .recovery-input{width:100%;height:44px;border-radius:11px;border:1px solid var(--border);background:var(--field-bg);color:var(--ink-primary);font-family:var(--font-body);font-size:15px;padding:0 14px;letter-spacing:.02em;outline:none;text-align:center;transition:border-color .2s var(--ease), background .2s var(--ease)}
   .recovery-input::placeholder{color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase}
   .recovery-input:focus{border-color:var(--border-strong);background:var(--field-bg-active)}
-  .recovery-input.good{border-color:rgba(140,200,120,.5);background:rgba(140,200,120,.08)}
-  html[data-theme="light"] .recovery-input.good{border-color:rgba(80,140,60,.55);background:rgba(140,200,120,.14)}
-  .recovery-actions{display:flex;gap:10px;width:100%;margin-top:12px}
+  .recovery-input.good{border-color:rgba(140,200,120,.5);background:rgba(140,200,120,.08)}  .recovery-actions{display:flex;gap:10px;width:100%;margin-top:12px}
   .btn-mini{flex:1;height:44px;border-radius:11px;border:1px solid var(--border);background:var(--key-bg);color:var(--ink-warm);font-size:14px;letter-spacing:.02em;font-weight:500;cursor:pointer;transition:all .22s var(--ease)}
   .btn-mini:hover{border-color:var(--border-strong);background:var(--key-hover)}
   .btn-mini.primary{background:linear-gradient(180deg,var(--accent-warm),var(--accent-warm-2));border-color:rgba(120,240,255,.55);color:#001a20;font-weight:600}
@@ -392,12 +350,6 @@
     </div>
     <div class="countdown"><span class="n" id="neetN">&mdash;</span><span class="l">NEET 2027</span></div>
     <div class="countdown"><span class="n" id="syllN">&mdash;</span><span class="l">Syllabus target</span></div>
-    <button class="icon-btn" id="audioBtn" type="button" title="Ambient audio" aria-label="Toggle ambient audio">
-      <svg viewBox="0 0 24 24" id="audioIcon"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
-    </button>
-    <button class="icon-btn" id="themeBtn" type="button" title="Toggle theme" aria-label="Toggle theme">
-      <svg viewBox="0 0 24 24" id="themeIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
   </div>
 
   <!-- Version badge -->
@@ -418,27 +370,6 @@
     <p class="tagline">&ldquo;Oh Captain! My Captain! It&rsquo;s time for 720&rdquo;</p>
     <div class="divider"></div>
     <div class="actions">
-      <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn btn-claude" title="Open Claude in a new tab" aria-label="Open Claude in a new tab">
-        <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
-          <g stroke="#d97757" stroke-width="8" stroke-linecap="round">
-            <line x1="50" y1="50" x2="50" y2="8"/><line x1="50" y1="50" x2="50" y2="92"/>
-            <line x1="50" y1="50" x2="8" y2="50"/><line x1="50" y1="50" x2="92" y2="50"/>
-            <line x1="50" y1="50" x2="20" y2="20"/><line x1="50" y1="50" x2="80" y2="80"/>
-            <line x1="50" y1="50" x2="80" y2="20"/><line x1="50" y1="50" x2="20" y2="80"/>
-            <line x1="50" y1="50" x2="33" y2="12"/><line x1="50" y1="50" x2="67" y2="88"/>
-            <line x1="50" y1="50" x2="12" y2="33"/><line x1="50" y1="50" x2="88" y2="67"/>
-            <line x1="50" y1="50" x2="67" y2="12"/><line x1="50" y1="50" x2="33" y2="88"/>
-            <line x1="50" y1="50" x2="88" y2="33"/><line x1="50" y1="50" x2="12" y2="67"/>
-          </g>
-        </svg>
-        Claude
-      </a>
-      <a href="https://grok.com" target="_blank" rel="noopener noreferrer" class="btn btn-grok" title="Open Grok in a new tab" aria-label="Open Grok in a new tab">
-        <svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round">
-          <path d="M22 82 L70 20"/><path d="M40 82 L78 33"/><path d="M62 82 L82 56"/>
-        </svg>
-        Grok
-      </a>
       <button type="button" class="btn btn-primary" id="crackBtn" aria-haspopup="dialog">Let&rsquo;s Crack Today <span class="arrow">&rarr;</span></button>
     </div>
   </div>
@@ -585,10 +516,7 @@
   var syllN = $('syllN');
   var streakEl = $('streak');
   var streakN = $('streakN');
-  var themeBtn = $('themeBtn');
-  var themeIcon = $('themeIcon');
-  var audioBtn = $('audioBtn');
-  var audioIcon = $('audioIcon');
+  // Theme & audio toggles removed — dark is the only theme; ambient sound handled elsewhere.
 
   var ctx = canvas.getContext('2d');
   var ambCtx = ambientCanvas.getContext('2d');
@@ -611,22 +539,8 @@
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var alreadyCrossed = SS.get('debos.intro.crossed') === '1';
 
-  // ---------- Theme ----------
-  function applyTheme(t){
-    document.documentElement.setAttribute('data-theme', t);
-    LS.set('debos.theme', t);
-    if (t === 'dark'){
-      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    } else {
-      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
-    }
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#060608' : '#f0ede6');
-  }
-  applyTheme(LS.get('debos.theme','dark'));
-  themeBtn.addEventListener('click', function(){
-    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-  });
+  // Theme is dark-only now — no toggle, no persistence.
+  document.documentElement.setAttribute('data-theme', 'dark');
 
   // ---------- Clock & countdowns ----------
   function pad2(n){ return n < 10 ? '0'+n : ''+n; }
@@ -1274,26 +1188,16 @@
   tapZone.addEventListener('click', function(){ if (!state.triggered) trigger(false); });
   tapZone.addEventListener('touchstart', function(e){ if (!state.triggered){ e.preventDefault(); trigger(false); } }, { passive:false });
 
-  // ---------- Audio ambient ----------
+  // ---------- Ambient white noise (auto-starts on first user gesture; no toggle) ----------
   var audioCtx = null, noiseGain = null;
-  function setAudioIcon(on){
-    audioBtn.classList.toggle('on', on);
-    if (on){
-      audioIcon.innerHTML = '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>';
-    } else {
-      audioIcon.innerHTML = '<path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
-    }
-  }
   function ensureAudio(){
     if (audioCtx) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audioCtx = new AC();
-    var sr = audioCtx.sampleRate;
-    var len = sr * 2;
+    var sr = audioCtx.sampleRate, len = sr * 2;
     var buf = audioCtx.createBuffer(1, len, sr);
-    var data = buf.getChannelData(0);
-    var lastOut = 0;
+    var data = buf.getChannelData(0), lastOut = 0;
     for (var i = 0; i < len; i++){
       var w = Math.random()*2 - 1;
       lastOut = (lastOut + 0.018*w) / 1.02;
@@ -1306,23 +1210,20 @@
     src.connect(noiseGain).connect(audioCtx.destination);
     src.start(0);
   }
-  function toggleAudio(){
+  function startAudioOnce(){
     ensureAudio();
     if (!audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
     var now = audioCtx.currentTime;
-    var on = (noiseGain.gain.value < 0.001);
-    var target = on ? 0.12 : 0;
     noiseGain.gain.cancelScheduledValues(now);
-    noiseGain.gain.linearRampToValueAtTime(target, now + 0.5);
-    setAudioIcon(on);
-    LS.set('debos.audio', on ? 'on' : 'off');
+    noiseGain.gain.linearRampToValueAtTime(0.10, now + 0.8);
+    document.removeEventListener('click', startAudioOnce, true);
+    document.removeEventListener('keydown', startAudioOnce, true);
+    document.removeEventListener('touchstart', startAudioOnce, true);
   }
-  setAudioIcon(false);
-  audioBtn.addEventListener('click', toggleAudio);
-  // Note: we don't auto-start audio even if preference is 'on' — browsers block autoplay.
-  // The saved state simply pre-selects the toggle position visually.
-  if (LS.get('debos.audio') === 'on') setAudioIcon(true);
+  document.addEventListener('click', startAudioOnce, true);
+  document.addEventListener('keydown', startAudioOnce, true);
+  document.addEventListener('touchstart', startAudioOnce, true);
 
   // ---------- Prefetch hint: warm the next page ----------
   var pf = document.createElement('link');

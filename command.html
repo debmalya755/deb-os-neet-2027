@@ -98,39 +98,6 @@
     --divider:     rgba(255,255,255,0.04);
     --nav-bg:      rgba(6,6,8,0.78);
   }
-  html[data-theme="light"]{
-    --bg-deep: #f0ede6;
-    --bg-mid: #e8e4dc;
-    --bg-warm: #faf8f4;
-    --panel: linear-gradient(135deg, #faf8f4 0%, #f0ece4 100%);
-    --panel-border: rgba(0,60,140,0.14);
-    --panel-shadow: 0 2px 20px rgba(0,0,0,0.09);
-    --ink-primary: #12121a;
-    --ink-warm:    #26262f;
-    --ink-dim:     #6b6570;
-    --ink-faint:   #a8a49c;
-    --sub:         #4a4550;
-    --border:      rgba(0,0,0,0.08);
-    --border-strong: rgba(0,60,140,0.4);
-    --field-bg:    rgba(0,60,140,0.03);
-    --field-bg-active: rgba(0,60,140,0.10);
-    --key-bg:      rgba(0,60,140,0.04);
-    --key-hover:   rgba(0,60,140,0.10);
-    --divider:     rgba(0,0,0,0.06);
-    --nav-bg:      rgba(240,237,230,0.85);
-
-    --accent-warm: #003c8c;
-    --accent-warm-2:#00478f;
-    --accent-glow: rgba(0,60,140,.20);
-    --accent-cool: #003c8c;
-    --subj-physics:#003c8c;
-    --focus:       rgba(0,60,140,.85);
-    --scan-clr:    rgba(0,0,0,0.02);
-    --grid-line:   rgba(0,60,140,0.05);
-    --glow-cyan:   0 0 0 transparent;
-    --glow-gold:   0 0 0 transparent;
-  }
-
   /* ---------- Reset ---------- */
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg-deep);color:var(--ink-primary);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
@@ -165,20 +132,13 @@
   /* ---------- Themed scrollbars ---------- */
   /* Firefox */
   *{scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.55) transparent}
-  html[data-theme="light"] *{scrollbar-color:rgba(0,60,140,.55) transparent}
-
   /* WebKit / Chromium */
   ::-webkit-scrollbar{width:10px;height:10px;background:transparent}
   ::-webkit-scrollbar-track{
     background:rgba(255,255,255,.015);
     border-left:1px solid var(--divider);
     box-shadow:inset 0 0 6px rgba(0,0,0,.35);
-  }
-  html[data-theme="light"] ::-webkit-scrollbar-track{
-    background:rgba(0,0,0,.025);
-    box-shadow:inset 0 0 6px rgba(0,0,0,.05);
-  }
-  ::-webkit-scrollbar-thumb{
+  }  ::-webkit-scrollbar-thumb{
     background:linear-gradient(180deg, rgba(0,245,255,.55) 0%, rgba(0,200,212,.35) 100%);
     border-radius:99px;
     border:2px solid transparent;
@@ -196,17 +156,6 @@
     box-shadow:inset 0 0 10px rgba(255,255,255,.35), 0 0 18px rgba(0,245,255,.55);
   }
   ::-webkit-scrollbar-corner{background:transparent}
-  html[data-theme="light"] ::-webkit-scrollbar-thumb{
-    background:linear-gradient(180deg, rgba(0,60,140,.55) 0%, rgba(0,40,110,.35) 100%);
-    background-clip:padding-box;
-    box-shadow:inset 0 0 6px rgba(0,60,140,.3), 0 0 8px rgba(0,60,140,.12);
-  }
-  html[data-theme="light"] ::-webkit-scrollbar-thumb:hover{
-    background:linear-gradient(180deg, rgba(0,60,140,.85) 0%, rgba(0,40,110,.6) 100%);
-    background-clip:padding-box;
-    box-shadow:inset 0 0 8px rgba(0,60,140,.45), 0 0 12px rgba(0,60,140,.25);
-  }
-
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   @keyframes softPulse{0%,100%{opacity:.5}50%{opacity:1}}
   @keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,255,.55)}70%{box-shadow:0 0 0 12px rgba(0,245,255,0)}}
@@ -346,8 +295,6 @@
   .hero-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px 18px}
   .hero .greeting{font-family:var(--font-body);font-weight:800;font-size:clamp(30px,4.2vw,54px);color:var(--ink-primary);letter-spacing:-.024em;line-height:1}
   .hero .greeting .accent{font-family:var(--font-display);font-style:normal;font-weight:800;font-size:.82em;letter-spacing:.02em;text-transform:uppercase;background:linear-gradient(180deg,#eaffff 0%,var(--accent-warm) 55%,var(--accent-warm-2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 6px 0 10px;filter:drop-shadow(0 0 26px rgba(0,245,255,.4))}
-  html[data-theme="light"] .hero .greeting .accent{filter:drop-shadow(0 0 18px rgba(0,60,140,.30))}
-
   /* Hero-right meta block: date + NEET line (moved from nav) */
   .hero-meta{display:flex;align-items:baseline;gap:14px;font-family:var(--font-body);line-height:1.15;flex-wrap:wrap;justify-content:flex-end}
   .hero-meta .meta-date{font-size:22px;font-weight:600;color:var(--ink-warm);letter-spacing:-.005em}
@@ -791,11 +738,7 @@
   /* Per-subject accent hooks — CSS custom props */
   .subject-card.physics  { --subj-color: var(--subj-physics); --subj-rgb: 0,245,255 }
   .subject-card.chemistry{ --subj-color: var(--subj-chem);    --subj-rgb: 201,148,58 }
-  .subject-card.biology  { --subj-color: var(--subj-bio);     --subj-rgb: 77,208,160 }
-  html[data-theme="light"] .subject-card.physics  { --subj-rgb: 0,60,140 }
-  html[data-theme="light"] .subject-card.chemistry{ --subj-rgb: 138,86,20 }
-  html[data-theme="light"] .subject-card.biology  { --subj-rgb: 47,157,112 }
-  .subject-card::before{
+  .subject-card.biology  { --subj-color: var(--subj-bio);     --subj-rgb: 77,208,160 }  .subject-card::before{
     content:'';position:absolute;left:12%;right:12%;top:0;height:1px;
     background:linear-gradient(90deg,transparent,var(--subj-color),transparent);
     opacity:.6;transition:opacity .3s var(--ease);
@@ -937,17 +880,6 @@
     </div>
   </div>
 
-  <div class="side-card theme-card">
-    <div class="card-label"><span class="dot"></span>Theme</div>
-    <div class="theme-toggle" id="themeToggle" role="switch" aria-label="Toggle theme" tabindex="0">
-      <div class="slot" data-mode="dark">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </div>
-      <div class="slot" data-mode="light">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </div>
-    </div>
-  </div>
 </aside>
 
 <main>
@@ -1075,6 +1007,13 @@
         <span class="tc-emoji" aria-hidden="true">😏</span>
         <div class="tc-body">
           <div class="tc-name">Focus Tracker</div>
+          <div class="tc-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+      <a class="tracker-card" href="test-tracker.html" aria-label="Open Test Tracker">
+        <span class="tc-emoji" aria-hidden="true">📋</span>
+        <div class="tc-body">
+          <div class="tc-name">Test Tracker</div>
           <div class="tc-open">Open <span aria-hidden="true">&rarr;</span></div>
         </div>
       </a>
@@ -1319,35 +1258,47 @@
     return { text: '&mdash;', cls: 'none' };
   }
 
-  // ---------- Theme ----------
-  // ---------- Theme (sidebar segmented toggle; nav is gone) ----------
-  function applyTheme(t){
-    document.documentElement.setAttribute('data-theme', t);
-    LS.set('debos.theme', t);
-    var tt = $('themeToggle');
-    if (tt){
-      tt.querySelectorAll('.slot').forEach(function(s){
-        s.classList.toggle('active', s.getAttribute('data-mode') === t);
-      });
+  // ---------- Theme (dark-only; toggle removed) ----------
+  document.documentElement.setAttribute('data-theme', 'dark');
+
+  // ---------- Ambient white noise: always on, no toggle ----------
+  // Browsers block autoplay until a user gesture, so we hook the first click / key / touch
+  // to bring up the audio graph, then never touch it again.
+  var _audioCtx = null, _noiseGain = null;
+  function _ensureAudio(){
+    if (_audioCtx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    _audioCtx = new AC();
+    var sr = _audioCtx.sampleRate, len = sr * 2;
+    var buf = _audioCtx.createBuffer(1, len, sr);
+    var data = buf.getChannelData(0), last = 0;
+    for (var i = 0; i < len; i++){
+      var w = Math.random()*2 - 1;
+      last = (last + 0.018*w) / 1.02;
+      data[i] = last * 3.2;
     }
-    var mt = document.querySelector('meta[name="theme-color"]');
-    if (mt) mt.setAttribute('content', t === 'dark' ? '#060608' : '#f0ede6');
+    var src = _audioCtx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    _noiseGain = _audioCtx.createGain();
+    _noiseGain.gain.value = 0;
+    src.connect(_noiseGain).connect(_audioCtx.destination);
+    src.start(0);
   }
-  applyTheme(LS.get('debos.theme','dark'));
-  (function(){
-    var tt = $('themeToggle');
-    if (!tt) return;
-    function toggle(){ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
-    tt.addEventListener('click', function(e){
-      // If a specific slot was clicked, jump directly to that mode
-      var s = e.target.closest && e.target.closest('.slot');
-      if (s){ applyTheme(s.getAttribute('data-mode')); return; }
-      toggle();
-    });
-    tt.addEventListener('keydown', function(e){
-      if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); toggle(); }
-    });
-  })();
+  function _kickAudio(){
+    _ensureAudio();
+    if (!_audioCtx) return;
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    var t = _audioCtx.currentTime;
+    _noiseGain.gain.cancelScheduledValues(t);
+    _noiseGain.gain.linearRampToValueAtTime(0.10, t + 0.8);
+    document.removeEventListener('click', _kickAudio, true);
+    document.removeEventListener('keydown', _kickAudio, true);
+    document.removeEventListener('touchstart', _kickAudio, true);
+  }
+  document.addEventListener('click', _kickAudio, true);
+  document.addEventListener('keydown', _kickAudio, true);
+  document.addEventListener('touchstart', _kickAudio, true);
 
   // ---------- Clock + countdowns ----------
   // Nav clock is gone; only the hero chips + inline "days to NEET" line need updating.
