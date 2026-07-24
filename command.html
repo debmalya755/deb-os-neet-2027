@@ -1276,46 +1276,9 @@
   // ---------- Theme (dark-only; toggle removed) ----------
   document.documentElement.setAttribute('data-theme', 'dark');
 
-  // ---------- Ambient white noise: always on, no toggle ----------
-  // Browsers block autoplay until a user gesture, so we hook the first click / key / touch
-  // to bring up the audio graph, then never touch it again.
-  var _audioCtx = null, _noiseGain = null;
-  function _ensureAudio(){
-    if (_audioCtx) return;
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    _audioCtx = new AC();
-    var sr = _audioCtx.sampleRate, len = sr * 2;
-    var buf = _audioCtx.createBuffer(1, len, sr);
-    var data = buf.getChannelData(0), last = 0;
-    for (var i = 0; i < len; i++){
-      var w = Math.random()*2 - 1;
-      last = (last + 0.018*w) / 1.02;
-      data[i] = last * 3.2;
-    }
-    var src = _audioCtx.createBufferSource();
-    src.buffer = buf; src.loop = true;
-    _noiseGain = _audioCtx.createGain();
-    _noiseGain.gain.value = 0;
-    src.connect(_noiseGain).connect(_audioCtx.destination);
-    src.start(0);
-  }
-  function _kickAudio(){
-    _ensureAudio();
-    if (!_audioCtx) return;
-    if (_audioCtx.state === 'suspended') _audioCtx.resume();
-    var t = _audioCtx.currentTime;
-    _noiseGain.gain.cancelScheduledValues(t);
-    _noiseGain.gain.linearRampToValueAtTime(0.10, t + 0.8);
-    document.removeEventListener('click', _kickAudio, true);
-    document.removeEventListener('keydown', _kickAudio, true);
-    document.removeEventListener('touchstart', _kickAudio, true);
-  }
-  document.addEventListener('click', _kickAudio, true);
-  document.addEventListener('keydown', _kickAudio, true);
-  document.addEventListener('touchstart', _kickAudio, true);
+  // Ambient audio removed by user request.
 
-  // ---------- Clock + countdowns ----------
+// ---------- Clock + countdowns ----------
   // Nav clock is gone; only the hero chips + inline "days to NEET" line need updating.
   function pad2(n){return n<10?'0'+n:''+n}
   function fmtFullDate(d){return d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}

@@ -1146,8 +1146,6 @@
     // 1.77-second transition: audio fade-out and visual fade run in perfect sync
     // so the black-hole drone tapers to silence exactly as the landing dissolves.
     var t = 1770;
-    // Fade the drone in step with the visuals — noop if audio never started
-    if (typeof window.__bhFadeOut === 'function') window.__bhFadeOut(t / 1000);
     // Also fade the black-hole canvas + ambient dust so the whole scene dims down
     canvas.style.transition = 'opacity '+t+'ms var(--ease-soft)';
     ambientCanvas.style.transition = 'opacity '+t+'ms var(--ease-soft)';
@@ -1292,113 +1290,9 @@
   tapZone.addEventListener('click', function(){ if (!state.triggered) trigger(false); });
   tapZone.addEventListener('touchstart', function(e){ if (!state.triggered){ e.preventDefault(); trigger(false); } }, { passive:false });
 
-  // ---------- Black-hole drone (Web Audio synth — no external files) ----------
-  // A deep, slow, ominous drone that emulates the low-frequency-scaled feel of a
-  // black-hole sonification. Detuned bass sines + a low fifth + a faint high shimmer
-  // routed through a lowpass and a feedback delay for a reverberant "vast space" tail.
-  // Auto-starts on the first user gesture; a slow fade-in over ~4s.
-  // window.__bhFadeOut(seconds) will smoothly duck the whole graph to silence — called
-  // by proceedToCommand() so the sound tapers as the visual fades to the command center.
-  var audioCtx = null, masterGain = null, activeNodes = [];
-  function ensureAudio(){
-    if (audioCtx) return;
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    audioCtx = new AC();
-    var sr = audioCtx.sampleRate;
+  // Ambient audio removed by user request.
 
-    // Master gain — everything routes here before hitting the speakers
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0;
-    masterGain.connect(audioCtx.destination);
-
-    // Lowpass filter — cuts everything above ~280 Hz so the drone sounds "muffled deep space"
-    var lowpass = audioCtx.createBiquadFilter();
-    lowpass.type = 'lowpass';
-    lowpass.frequency.value = 280;
-    lowpass.Q.value = 1.4;
-    lowpass.connect(masterGain);
-
-    // Feedback delay = poor-man's cavernous reverb (cheap vs. ConvolverNode)
-    var delay = audioCtx.createDelay(1.2);
-    delay.delayTime.value = 0.42;
-    var fbGain = audioCtx.createGain();
-    fbGain.gain.value = 0.45;
-    var wetGain = audioCtx.createGain();
-    wetGain.gain.value = 0.55;
-    delay.connect(fbGain).connect(delay);
-    delay.connect(wetGain).connect(masterGain);
-
-    // Three detuned oscillators — bass fundamental, slightly-off partner (beating), low fifth
-    function mkOsc(type, freq, level, dest){
-      var o = audioCtx.createOscillator();
-      o.type = type;
-      o.frequency.value = freq;
-      var g = audioCtx.createGain();
-      g.gain.value = level;
-      o.connect(g).connect(dest);
-      o.connect(g).connect(delay);   // send some to reverb tail
-      o.start(0);
-      activeNodes.push(o);
-      return o;
-    }
-    mkOsc('sine',     55.0, 0.60, lowpass);   // deep bass fundamental
-    mkOsc('sine',     57.3, 0.45, lowpass);   // slight detune → slow beating
-    mkOsc('sine',     82.4, 0.28, lowpass);   // perfect fifth up (adds "chord")
-    mkOsc('triangle', 27.5, 0.35, lowpass);   // subsonic rumble
-    mkOsc('sine',    220.0, 0.06, lowpass);   // faint high shimmer
-
-    // Slow filter LFO — cutoff sweeps between 220–360 Hz once every ~24s
-    // Gives the drone a subtle "breathing" quality
-    var lfo = audioCtx.createOscillator();
-    lfo.frequency.value = 1 / 24;
-    var lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 70;
-    lfo.connect(lfoGain).connect(lowpass.frequency);
-    lfo.start(0);
-    activeNodes.push(lfo);
-
-    // Very quiet filtered noise for "cosmic hiss" — 1s buffer looped
-    var nLen = sr * 1;
-    var nBuf = audioCtx.createBuffer(1, nLen, sr);
-    var nData = nBuf.getChannelData(0);
-    for (var i = 0; i < nLen; i++) nData[i] = (Math.random()*2 - 1) * 0.6;
-    var noise = audioCtx.createBufferSource();
-    noise.buffer = nBuf; noise.loop = true;
-    var noiseHP = audioCtx.createBiquadFilter();
-    noiseHP.type = 'highpass'; noiseHP.frequency.value = 900;
-    var noiseGain = audioCtx.createGain();
-    noiseGain.gain.value = 0.020;
-    noise.connect(noiseHP).connect(noiseGain).connect(masterGain);
-    noise.start(0);
-    activeNodes.push(noise);
-  }
-  function startAudioOnce(){
-    ensureAudio();
-    if (!audioCtx) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    var now = audioCtx.currentTime;
-    masterGain.gain.cancelScheduledValues(now);
-    // Slow fade IN to a soft ambient level (target 0.09) over 4 seconds
-    masterGain.gain.setValueAtTime(masterGain.gain.value || 0, now);
-    masterGain.gain.linearRampToValueAtTime(0.09, now + 4);
-    document.removeEventListener('click', startAudioOnce, true);
-    document.removeEventListener('keydown', startAudioOnce, true);
-    document.removeEventListener('touchstart', startAudioOnce, true);
-  }
-  // Expose fade-out so proceedToCommand() can hook into it
-  window.__bhFadeOut = function(seconds){
-    if (!audioCtx || !masterGain) return;
-    var now = audioCtx.currentTime;
-    masterGain.gain.cancelScheduledValues(now);
-    masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-    masterGain.gain.linearRampToValueAtTime(0.0001, now + Math.max(0.1, seconds || 1.77));
-  };
-  document.addEventListener('click', startAudioOnce, true);
-  document.addEventListener('keydown', startAudioOnce, true);
-  document.addEventListener('touchstart', startAudioOnce, true);
-
-  // ---------- Prefetch hint: warm the next page ----------
+// ---------- Prefetch hint: warm the next page ----------
   var pf = document.createElement('link');
   pf.rel = 'prefetch'; pf.href = CONFIG.NEXT_PAGE;
   document.head.appendChild(pf);

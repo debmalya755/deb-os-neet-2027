@@ -253,19 +253,9 @@
 (function(){
   'use strict';
 
-  /* Ambient white noise — always on, auto-starts on first user gesture */
-  var _actx=null,_ng=null;
-  function _ensureA(){ if(_actx)return; var AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
-    _actx=new AC(); var sr=_actx.sampleRate,len=sr*2, buf=_actx.createBuffer(1,len,sr), d=buf.getChannelData(0), l=0;
-    for(var i=0;i<len;i++){var w=Math.random()*2-1;l=(l+0.018*w)/1.02;d[i]=l*3.2;}
-    var s=_actx.createBufferSource(); s.buffer=buf; s.loop=true; _ng=_actx.createGain(); _ng.gain.value=0;
-    s.connect(_ng).connect(_actx.destination); s.start(0); }
-  function _kickA(){ _ensureA(); if(!_actx)return; if(_actx.state==='suspended')_actx.resume();
-    var t=_actx.currentTime; _ng.gain.cancelScheduledValues(t); _ng.gain.linearRampToValueAtTime(0.10,t+0.8);
-    document.removeEventListener('click',_kickA,true); document.removeEventListener('keydown',_kickA,true); document.removeEventListener('touchstart',_kickA,true); }
-  document.addEventListener('click',_kickA,true); document.addEventListener('keydown',_kickA,true); document.addEventListener('touchstart',_kickA,true);
+  /* Ambient audio removed by user request. */
 
-  var ICON = {
+var ICON = {
     // === Physical Chemistry ===
     'mole':'<rect x="14" y="22" width="30" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="18" y="26" width="22" height="10" rx="2" fill="currentColor" opacity=".25"/><g fill="currentColor"><circle cx="22" cy="46" r="2"/><circle cx="30" cy="46" r="2"/><circle cx="38" cy="46" r="2"/><circle cx="22" cy="56" r="2"/><circle cx="30" cy="56" r="2"/><circle cx="38" cy="56" r="2"/></g><g fill="currentColor"><circle cx="72" cy="34" r="5"/><circle cx="82" cy="46" r="5"/><circle cx="66" cy="52" r="5"/><circle cx="82" cy="66" r="4"/></g><g stroke="currentColor" stroke-width="2" fill="none"><line x1="72" y1="34" x2="82" y2="46"/><line x1="82" y1="46" x2="66" y2="52"/><line x1="82" y1="46" x2="82" y2="66"/></g>',
     'redox':'<path d="M22 40 A 28 22 0 0 1 78 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="78,40 70,34 72,46" fill="currentColor"/><path d="M78 62 A 28 22 0 0 1 22 62" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="22,62 30,68 28,56" fill="currentColor"/><circle cx="50" cy="30" r="4" fill="currentColor"/><circle cx="50" cy="72" r="4" fill="currentColor"/>',
