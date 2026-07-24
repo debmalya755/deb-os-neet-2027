@@ -13,11 +13,21 @@
 <title>Command Center &mdash; DEB OS</title>
 <script>
   /* Hydrate theme before first paint — prevents dark/light flash when arriving from landing.
-     Also enforces session guard early so unauth users don't briefly see the dashboard shell. */
+     Also enforces the session guard AND treats every refresh as a hard reset:
+     the user wants a refresh (accidental or not) to send them back to the black-hole intro. */
   (function(){ try{
     var t = localStorage.getItem('debos.theme');
     if (t !== 'dark' && t !== 'light') t = 'dark';
     document.documentElement.setAttribute('data-theme', t);
+    /* Reload detection — modern browsers via PerformanceNavigationTiming.
+       Falls back to the legacy performance.navigation.type === 1 for older engines. */
+    var isReload = false;
+    try{
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') isReload = true;
+    }catch(_){}
+    if (!isReload && performance.navigation && performance.navigation.type === 1) isReload = true;
+    if (isReload) sessionStorage.removeItem('debos.session.unlocked');
     if (sessionStorage.getItem('debos.session.unlocked') !== '1'){
       window.location.replace('index.html');
     }
