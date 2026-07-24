@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!--
+  jarvis-demo.html — test harness for the JARVIS module.
+  Open in Chrome, allow the mic, say "Captain" → "Yes, sir" → then a command.
+  The buttons below inject transcripts directly (JARVIS.simulate) so the whole
+  state machine can be exercised with no microphone at all.
+
+  Integration in the real DEB OS page is just the two marked lines at the bottom.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS · DEB OS voice module test bench</title>
+<style>
+  :root { color-scheme: dark; }
+  body{margin:0;padding:32px;background:#07090d;color:#dfe7f0;
+       font:15px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;}
+  h1{font-size:18px;letter-spacing:.04em;margin:0 0 4px;}
+  p.sub{margin:0 0 24px;color:#7d8b9c;font-size:13px;}
+  section{max-width:760px;margin-bottom:26px;}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#6f8298;margin:0 0 10px;}
+  button{font:500 12px ui-monospace,Menlo,Consolas,monospace;color:#dfe7f0;
+         background:#131a24;border:1px solid #26313f;border-radius:6px;
+         padding:7px 11px;margin:0 6px 6px 0;cursor:pointer;}
+  button:hover{background:#1a2432;border-color:#39485a;}
+  #log{background:#0b0f15;border:1px solid #1c242f;border-radius:8px;padding:12px;
+       height:220px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;
+       color:#9db1c7;white-space:pre-wrap;}
+  code{background:#131a24;padding:1px 5px;border-radius:4px;font-size:12.5px;}
+  .state{color:#7fd4ff;}
+</style>
+</head>
+<body>
+
+<h1>JARVIS · voice module test bench</h1>
+<p class="sub">Chrome only. State indicator lives in the bottom-right corner.</p>
+
+<section>
+  <h2>1 · Wake cycle</h2>
+  <button onclick="JARVIS.simulate('captain')">say “captain”</button>
+  <button onclick="JARVIS.simulate('wake up, captain')">say “wake up, captain”</button>
+  <button onclick="JARVIS.simulate('captain captain captain')">re-trigger guard test</button>
+  <button onclick="JARVIS.simulate('the weather is nice today')">non-wake speech (ignored)</button>
+</section>
+
+<section>
+  <h2>2 · Commands (run one right after a wake, inside the 6s window)</h2>
+  <button onclick="JARVIS.simulate('start the L1 task')">start the L1 task</button>
+  <button onclick="JARVIS.simulate('start lecture two')">start lecture two</button>
+  <button onclick="JARVIS.simulate('log blowout physics rotational motion')">log blowout physics …</button>
+  <button onclick="JARVIS.simulate('blowout chemistry')">blowout chemistry</button>
+  <button onclick="JARVIS.simulate('mark complete')">mark complete (infer active)</button>
+  <button onclick="JARVIS.simulate('finish this')">finish this</button>
+  <button onclick="JARVIS.simulate('shelve this')">shelve this</button>
+  <button onclick="JARVIS.simulate('pause')">pause</button>
+  <button onclick="JARVIS.simulate('cancel')">cancel</button>
+  <button onclick="JARVIS.simulate('make me a sandwich')">unknown command</button>
+</section>
+
+<section>
+  <h2>3 · Fixtures</h2>
+  <button onclick="setActive(0)">1 active task (L1)</button>
+  <button onclick="setActive(0,1)">2 active tasks (ambiguity → clarify)</button>
+  <button onclick="setActive(2)">active PYQ set</button>
+  <button onclick="setActive()">nothing active</button>
+  <button onclick="JARVIS.stop()">stop listening</button>
+  <button onclick="JARVIS.start()">start listening</button>
+</section>
+
+<section>
+  <h2>Event log</h2>
+  <div id="log"></div>
+</section>
+
+<!-- ===== integration point: fake DEB OS data layer for this demo ===== -->
+<script>
+  // In the real site this object is your data layer. Defined BEFORE jarvis.js
+  // so the module's stubs are skipped entirely.
+  var TASKS = [
+    { id:'L1', name:'Lecture 1', subject:'Physics',   type:'lecture', active:false, aliases:['rotational motion'] },
+    { id:'L2', name:'Lecture 2', subject:'Chemistry', type:'lecture', active:false, aliases:['mole concept'] },
+    { id:'P1', name:'PYQ Set 1', subject:'Biology',   type:'pyq',     active:false, aliases:['genetics'] }
+  ];
+  function setActive() {
+    var idx = [].slice.call(arguments);
+    TASKS.forEach(function (t, i) { t.active = idx.indexOf(i) !== -1; });
+    line('fixture · active = [' + TASKS.filter(function(t){return t.active;}).map(function(t){return t.id;}).join(', ') + ']');
+  }
+  window.DEBOS = {
+    getCurrentTasks: function () { return TASKS; },
+    getTaskById:     function (id) { return TASKS.filter(function(t){return t.id===id;})[0] || null; },
+    getActiveTasks:  function () { return TASKS.filter(function(t){return t.active;}); },
+    getActivePYQSet: function () { return TASKS.filter(function(t){return t.active && t.type==='pyq';})[0] || null; },
+    startTask:    function (id) { line('DEBOS.startTask('+id+')');    return true; },
+    markComplete: function (id) { line('DEBOS.markComplete('+id+')'); return true; },
+    logBlowout:   function (s,t){ line('DEBOS.logBlowout('+s+', '+(t||'—')+')'); return true; },
+    shelvePYQSet: function (id) { line('DEBOS.shelvePYQSet('+id+')'); return true; },
+    pauseTask:    function (id) { line('DEBOS.pauseTask('+id+')');    return true; },
+    cancelTask:   function (id) { line('DEBOS.cancelTask('+id+')');   return true; }
+  };
+  function line(t) {
+    var el = document.getElementById('log');
+    el.textContent += new Date().toLocaleTimeString() + '  ' + t + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
+</script>
+
+<!-- ============ THE ONLY TWO LINES THE REAL SITE NEEDS ============ -->
+<div id="jarvis-indicator"></div>
+<script src="jarvis.js"></script>
+<!-- =============================================================== -->
+
+<script>
+  JARVIS.config.debug = true;
+  JARVIS.on(function (e) { line('state · ' + e.from + ' → ' + e.to); });
+  setActive(0);
+  line('JARVIS v' + JARVIS.version + ' · supported=' + JARVIS.supported);
+</script>
+</body>
+</html>

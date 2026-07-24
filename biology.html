@@ -891,5 +891,16 @@
 </div>
 <div class="toast" id="toast" aria-live="polite">Task added</div>
 
+
+<!-- ========================= JARVIS voice module =========================
+     Wake word: "Captain" (or "wake up, Captain") -> 6s command window.
+     jarvis-debos.js = DEB OS data-layer adapter (defines window.DEBOS)
+     jarvis.js       = voice engine (Web Speech API, no backend, no AI)
+     Runs only while this tab is open. Chrome recommended.
+     ==================================================================== -->
+<div id="jarvis-indicator" data-corner="bottom-left"></div>
+<script src="jarvis-debos.js"></script>
+<script src="jarvis.js"></script>
+
 </body>
 </html>
