@@ -347,8 +347,9 @@
       var J = global.JARVIS;
       if (!J || !J.notify) return;
       if (J.getState().state === 'DISABLED') return;   // engine already spoke up
-      J.notify('Voice control is on. Say “Captain”, wait for “Yes, sir”, ' +
-               'then give a command — e.g. “start L1” or “mark complete”.');
+      J.notify('Voice control is on. Say “Jarvis”, wait for “Yes, sir”, ' +
+               'then give a command — e.g. “start L1” or “mark complete”. ' +
+               'Tap this dot any time to check it’s working.');
     }, 1800);
   }
   // jarvis.js loads after this file, so wait a tick for JARVIS to exist.

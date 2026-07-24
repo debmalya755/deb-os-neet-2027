@@ -123,13 +123,16 @@ ok(J.getState().state === 'PASSIVE', 'boots into PASSIVE');
 ok(MockSR.startCount >= 1, 'recognition auto-started');
 
 console.log('\npassive state ignores non-wake speech');
-reset();
-sr().hear('i should probably revise thermodynamics tonight');
-ok(J.getState().state === 'PASSIVE', 'stays PASSIVE');
-ok(spoken.length === 0, 'says nothing');
+for (const junk of ['i should probably revise thermodynamics tonight',
+                    'captain']) {          // old wake word is retired
+  reset();
+  sr().hear(junk);
+  ok(J.getState().state === 'PASSIVE', `"${junk}" leaves it PASSIVE`);
+  ok(spoken.length === 0, '  → says nothing');
+}
 
 console.log('\nwake words');
-for (const phrase of ['captain', 'wake up captain', 'wake up, captain', 'Captain!', 'ok captin']) {
+for (const phrase of ['jarvis', 'wake up jarvis', 'wake up, jarvis', 'Jarvis!', 'hey travis']) {
   reset();
   sr().hear(phrase);
   ok(J.getState().state === 'AWAKENED' && spoken[0] === 'Yes, sir', `"${phrase}" → AWAKENED + "Yes, sir"`);
@@ -141,7 +144,7 @@ for (const phrase of ['captain', 'wake up captain', 'wake up, captain', 'Captain
 
 console.log('\nself-hearing guard');
 reset();
-sr().hear('captain');
+sr().hear('jarvis');
 sr().hear('start L1');                            // arrives while still speaking
 ok(calls.length === 0, 'transcripts during synthesis are dropped');
 await settled();
@@ -151,9 +154,9 @@ await sleep(J.config.awakeWindowMs + 60);
 
 console.log('\nre-trigger guard');
 reset();
-sr().hear('captain');
+sr().hear('jarvis');
 await settled();
-sr().hear('captain captain');
+sr().hear('jarvis jarvis');
 ok(spoken.filter(s => s === 'Yes, sir').length === 1, 'extra wake words do not restart the cycle');
 await sleep(J.config.awakeWindowMs + 60);
 
@@ -169,7 +172,7 @@ const cases = [
 ];
 for (const [utterance, expected, saidRe] of cases) {
   reset(); setActive();
-  sr().hear('captain'); await settled();
+  sr().hear('jarvis'); await settled();
   sr().hear(utterance); await sleep(60); await settled();
   const c = calls[0] || [];
   ok(JSON.stringify(c) === JSON.stringify(expected),
@@ -182,26 +185,26 @@ for (const [utterance, expected, saidRe] of cases) {
 
 console.log('\ntarget inference');
 reset(); setActive(0);
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('mark complete'); await sleep(60); await settled();
 ok(JSON.stringify(calls[0]) === JSON.stringify(['markComplete', 'L1']), 'single active task inferred for "mark complete"');
 await sleep(80);
 
 reset(); setActive(2);
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('shelve this'); await sleep(60); await settled();
 ok(JSON.stringify(calls[0]) === JSON.stringify(['shelvePYQSet', 'P1']), 'active PYQ set inferred for "shelve this"');
 await sleep(80);
 
 reset(); setActive();
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('finish this'); await sleep(60); await settled();
 ok(calls.length === 0 && /Nothing is active/.test(spoken.join(' ')), 'no active task → "Nothing is active, sir"');
 await sleep(80);
 
 console.log('\nclarification when ambiguous');
 reset(); setActive(0, 1);
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('mark complete'); await sleep(60); await settled();
 ok(/Which one, sir/.test(spoken.join(' ')), 'two active tasks → asks which one');
 ok(calls.length === 0, 'nothing executed before the answer');
@@ -210,7 +213,7 @@ ok(JSON.stringify(calls[0]) === JSON.stringify(['markComplete', 'L2']), 'ordinal
 await sleep(120);
 
 reset(); setActive(0, 1);
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('pause'); await sleep(60); await settled();
 sr().hear('lecture one'); await sleep(60); await settled();
 ok(JSON.stringify(calls[0]) === JSON.stringify(['pauseTask', 'L1']), 'name answer resolves to L1');
@@ -225,7 +228,7 @@ const junkCases = [
 ];
 for (const [junk, re] of junkCases) {
   reset(); setActive();
-  sr().hear('captain'); await settled();
+  sr().hear('jarvis'); await settled();
   sr().hear(junk);
   await sleep(J.config.awakeWindowMs + 80); await settled();
   const said = spoken.join(' | ');
@@ -237,7 +240,7 @@ for (const [junk, re] of junkCases) {
 
 console.log('\ncommand split across two recognition chunks');
 reset(); setActive();
-sr().hear('captain'); await settled();
+sr().hear('jarvis'); await settled();
 sr().hear('start');            await sleep(30);
 sr().hear('the l1 task');      await sleep(60); await settled();
 ok(JSON.stringify(calls[0]) === JSON.stringify(['startTask', 'L1']), 'buffer accumulates within the window');
@@ -261,8 +264,10 @@ reset();
 sr().fail('not-allowed');
 await sleep(30);
 ok(J.getState().state === 'DISABLED', 'permission denied → DISABLED');
-ok(byId['jarvis-notice'] && /microphone permission was denied/.test(byId['jarvis-notice'].textContent),
-   'non-blocking notice shown (no alert/popup)');
+ok(byId['jarvis-notice'] && /microphone permission/i.test(byId['jarvis-notice'].textContent),
+   'non-blocking notice explains the mic in plain language (no alert/popup)');
+ok(/Microphone permission was refused/i.test(J.diagnose()),
+   'diagnose() reports the reason for a click on the dot');
 const afterDenied = MockSR.startCount;
 await sleep(J.config.watchdogIntervalMs > 500 ? 600 : 600);
 ok(MockSR.startCount === afterDenied, 'no restart storm after denial');
@@ -271,8 +276,28 @@ console.log('\ntab unload');
 const abortsBefore = MockSR.abortCount;
 (winEvents.beforeunload || []).forEach(f => f());
 ok(MockSR.abortCount > abortsBefore || J.getState().listening === false, 'recognition aborted on unload');
-sr().hear('captain');
+sr().hear('jarvis');
 ok(J.getState().state !== 'AWAKENED', 'no listening state survives unload');
+
+console.log('\nrepeated network failures (Brave-style blocked speech service)');
+{
+  // Fresh context so the earlier permission denial doesn't mask this path.
+  const sb2 = { console, setTimeout, clearTimeout, setInterval, clearInterval, Date,
+                document, DEBOS, SpeechRecognition: MockSR, speechSynthesis,
+                SpeechSynthesisUtterance: MockUtterance, addEventListener: () => {} };
+  sb2.window = sb2; sb2.globalThis = sb2;
+  vm.createContext(sb2);
+  vm.runInContext(src, sb2, { filename: 'jarvis.js' });
+  const r = MockSR.instances[MockSR.instances.length - 1];
+  r.fail('network'); r.fail('network');
+  ok(sb2.JARVIS.getState().state !== 'DISABLED', 'one or two network blips are tolerated');
+  r.fail('network');
+  ok(sb2.JARVIS.getState().state === 'DISABLED', 'a run of them disables with an explanation');
+  ok(/Chrome|internet connection/.test(sb2.JARVIS.diagnose()) ||
+     /Chrome|internet connection/.test(byId['jarvis-notice'].textContent),
+     '  → message points at the browser or the connection');
+  sb2.JARVIS.stop();
+}
 
 console.log('\nunsupported browser (separate context)');
 {

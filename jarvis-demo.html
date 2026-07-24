@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   jarvis-demo.html — test harness for the JARVIS module.
-  Open in Chrome, allow the mic, say "Captain" → "Yes, sir" → then a command.
+  Open in Chrome, allow the mic, say "Jarvis" → "Yes, sir" → then a command.
   The buttons below inject transcripts directly (JARVIS.simulate) so the whole
   state machine can be exercised with no microphone at all.
 
@@ -38,9 +38,10 @@
 
 <section>
   <h2>1 · Wake cycle</h2>
-  <button onclick="JARVIS.simulate('captain')">say “captain”</button>
-  <button onclick="JARVIS.simulate('wake up, captain')">say “wake up, captain”</button>
-  <button onclick="JARVIS.simulate('captain captain captain')">re-trigger guard test</button>
+  <button onclick="JARVIS.simulate('jarvis')">say “jarvis”</button>
+  <button onclick="JARVIS.simulate('wake up, jarvis')">say “wake up, jarvis”</button>
+  <button onclick="JARVIS.simulate('jarvis jarvis jarvis')">re-trigger guard test</button>
+  <button onclick="JARVIS.simulate('captain')">old wake word (should be ignored)</button>
   <button onclick="JARVIS.simulate('the weather is nice today')">non-wake speech (ignored)</button>
 </section>
 

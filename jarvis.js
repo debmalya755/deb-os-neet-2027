@@ -134,6 +134,47 @@
   var SUPPORTED = !!SR;                       // hard requirement
   var SYNTH_SUPPORTED = !!(SYNTH && Utterance); // soft: JARVIS goes mute-only
 
+  /* -------------------------------------------------------------------------
+   * Browser sniffing, kept to what actually changes behaviour here.
+   *
+   * Only real Chrome (and Chromium proper) runs continuous recognition
+   * dependably. Everything else fails in its own way, and each failure needs a
+   * different sentence in plain English:
+   *   Firefox  — no SpeechRecognition object at all.
+   *   Brave    — the object exists but the speech service is blocked by the
+   *              browser's shields, so every attempt dies with a 'network' error.
+   *   Edge/Opera — usually work, occasionally throttle; treated as "probably OK".
+   * ---------------------------------------------------------------------- */
+  var UA = (global.navigator && global.navigator.userAgent) || '';
+  var BROWSER = {
+    isEdge:   /\bEdg\//.test(UA),
+    isOpera:  /\bOPR\//.test(UA),
+    isBrave:  !!(global.navigator && global.navigator.brave),
+    isFirefox: /\bFirefox\//.test(UA),
+    isSafari: /^((?!chrome|android|crios|edg).)*safari/i.test(UA),
+    isMobile: /Android|iPhone|iPad|iPod/i.test(UA)
+  };
+  BROWSER.isRealChrome = /\bChrome\//.test(UA) &&
+    !BROWSER.isEdge && !BROWSER.isOpera && !BROWSER.isBrave;
+
+  // Diagnostics — enough to explain a silent failure without a dev console.
+  var DIAG = {
+    lastError: null,      // last SpeechRecognition error code
+    errorCount: 0,
+    networkErrors: 0,
+    everStarted: false,   // did onstart ever fire?
+    everHeard: false,     // did onresult ever fire?
+    startAttempts: 0
+  };
+
+  // ?jarvisdebug=1 anywhere in the URL turns on tracing and surfaces every
+  // recognition error as a corner message, so a non-technical user can read
+  // out what's wrong instead of opening devtools.
+  var VERBOSE = false;
+  try {
+    VERBOSE = !!(global.location && /jarvisdebug/.test(global.location.search || ''));
+  } catch (e) {}
+
   /* =========================================================================
    * SECTION 3 — INTEGRATION STUBS  (the ONLY place DEB OS wiring happens)
    * -------------------------------------------------------------------------
@@ -349,12 +390,18 @@
    * Everything JARVIS understands is enumerated here. Nothing is inferred.
    * =======================================================================*/
 
-  // Wake phrases: "captain" or "wake up captain", case-insensitive, tolerant of
-  // pauses/commas (punctuation is stripped before matching) and of the handful
-  // of ways Chrome mis-transcribes "captain".
+  // Wake phrase: "Jarvis", or "wake up Jarvis". Case-insensitive and tolerant of
+  // pauses/commas, since punctuation is stripped before matching.
+  //
+  // The alternates are the ways speech engines routinely mis-hear the name —
+  // "Travis" and "Service" come back often. Both are vanishingly rare in
+  // exam-prep speech, so accepting them costs nothing and saves a lot of
+  // repeated calling. A false wake is cheap: it answers "Yes, sir" and goes
+  // quiet again six seconds later.
+  var WAKE_ALT = '(?:jarvis|jarviss|jarvez|jarvus|jervis|javis|jaravis|travis|charvis|service)';
   var WAKE_PATTERNS = [
-    /\bwake\s*up\s+(?:cap(?:tain|tin|tan|ten|ton)|kap(?:tain|tin)|captive)\b/,
-    /\b(?:cap(?:tain|tin|tan|ten|ton)|kap(?:tain|tin))\b/
+    new RegExp('\\bwake\\s*up\\s+' + WAKE_ALT + '\\b'),
+    new RegExp('\\b' + WAKE_ALT + '\\b')
   ];
 
   var SUBJECTS = [
@@ -429,9 +476,13 @@
     '  color:rgba(230,238,246,.6);background:rgba(8,12,18,.62);',
     '  border:1px solid var(--panel-border,rgba(120,170,255,.14));',
     '  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);',
-    '  user-select:none;pointer-events:none;',
+    // Clickable on purpose: tapping the dot reports what the voice layer is
+    // doing (or why it isn't) in plain language, and retries a stalled
+    // recogniser. Without it, a dim dot is an unreadable dead end.
+    '  user-select:none;pointer-events:auto;cursor:pointer;',
     '  transition:background .3s ease,border-color .3s ease,color .3s ease,box-shadow .3s ease;',
     '}',
+    '#jarvis-indicator:hover{color:rgba(230,238,246,.92);}',
     /* corner placement (CONFIG.corner / data-corner on the placeholder) */
     '#jarvis-indicator.jarvis-at-bottom-left{left:20px;right:auto;bottom:20px;top:auto;}',
     '#jarvis-indicator.jarvis-at-top-right{top:20px;bottom:auto;right:20px;left:auto;}',
@@ -539,6 +590,16 @@
     ui.label = root.querySelector('.jarvis-label');
     ui.timerBar = root.querySelector('.jarvis-timer > i');
     if (ui.timerBar) ui.timerBar.style.animationDuration = CONFIG.awakeWindowMs + 'ms';
+
+    // Tap/click the dot: say what's going on in plain language, and give a
+    // stalled recogniser a nudge. This click IS a user gesture, which is also
+    // the most reliable moment to (re)start recognition in stricter browsers.
+    if (root.addEventListener) {
+      root.addEventListener('click', function () {
+        notice(diagnose());
+        if (shouldRun && !running && !permissionDenied) startRecognition();
+      });
+    }
   }
 
   var VISUAL = {
@@ -685,6 +746,7 @@
 
     r.onstart = function () {
       running = true;
+      DIAG.everStarted = true;
       restartDelay = CONFIG.restartDelayMs; // healthy session -> reset backoff
       log('recognition started');
     };
@@ -699,6 +761,7 @@
       }
       chunk = chunk.trim();
       if (!chunk) return;
+      DIAG.everHeard = true;
 
       // Self-hearing guard: while JARVIS is speaking, nothing is parsed.
       if (muted || isEcho(chunk)) { log('ignored (own voice):', chunk); return; }
@@ -709,22 +772,41 @@
 
     r.onerror = function (event) {
       var err = event && event.error;
+      DIAG.lastError = err || 'unknown';
+      DIAG.errorCount++;
       log('recognition error:', err);
+      if (VERBOSE) notice('JARVIS debug — recognition error: ' + DIAG.lastError);
 
       if (err === 'not-allowed' || err === 'service-not-allowed') {
-        // EDGE CASE: microphone permission denied (or blocked by policy).
-        // Fail gracefully, tell the user quietly, and never retry in a loop.
+        // EDGE CASE: microphone permission denied, or the browser refuses to
+        // hand the audio to a speech service at all (Brave's shields do this).
         permissionDenied = true;
-        disable('Voice control unavailable — microphone permission was denied. ' +
-                'Allow the mic in your browser’s site settings and reload to enable JARVIS.');
+        disable(BROWSER.isBrave
+          ? 'Voice control is blocked by Brave. Brave disables the Web Speech ' +
+            'API by default — open this site in Google Chrome instead.'
+          : 'Voice control needs microphone permission. Click the mic or lock ' +
+            'icon in the address bar, allow the microphone, then reload.');
         return;
       }
       if (err === 'audio-capture') {
-        disable('Voice control unavailable — no microphone was found.');
+        disable('Voice control can’t find a microphone. Plug one in or check ' +
+                'your system sound settings, then reload.');
         return;
       }
       if (err === 'network') {
-        // Chrome's STT is cloud-backed; a blip here is transient. Back off.
+        // Recognition is cloud-backed. One blip is transient — a run of them
+        // means this browser can't reach a speech service at all, which is
+        // exactly what Brave (and some Edge/Chromium builds) do.
+        DIAG.networkErrors++;
+        if (DIAG.networkErrors >= 3) {
+          disable(BROWSER.isRealChrome
+            ? 'Voice control can’t reach the speech service. Check your ' +
+              'internet connection and reload.'
+            : 'Voice control can’t reach the speech service in this browser. ' +
+              'Open this site in Google Chrome — it’s the only browser this ' +
+              'feature works reliably in.');
+          return;
+        }
         restartDelay = Math.min(restartDelay * 2, CONFIG.maxRestartDelayMs);
       }
       // 'no-speech' and 'aborted' are normal and expected — onend handles them.
@@ -747,6 +829,7 @@
   function startRecognition() {
     if (!shouldRun || isUnloading || permissionDenied || running) return;
     if (!recognition) recognition = buildRecognition();
+    DIAG.startAttempts++;
     try {
       // Permission is requested implicitly by .start() — the minimal surface.
       // No separate getUserMedia() call is made.
@@ -771,6 +854,44 @@
     }, CONFIG.watchdogIntervalMs);
   }
 
+  /* -------------------------------------------------------------------------
+   * One sentence describing what the voice layer is doing, or why it isn't.
+   * Shown when the indicator is clicked, so a silent failure is always
+   * readable without a developer console.
+   * ---------------------------------------------------------------------- */
+  function diagnose() {
+    if (!SUPPORTED) {
+      return 'This browser has no speech recognition' +
+             (BROWSER.isFirefox ? ' (Firefox never shipped it)' : '') +
+             '. Open the site in Google Chrome to use voice.';
+    }
+    if (global.JARVIS_DISABLED) {
+      return 'Voice is off on this page — unlock the site from the landing page first.';
+    }
+    if (permissionDenied) {
+      return BROWSER.isBrave
+        ? 'Brave is blocking voice recognition. Use Google Chrome.'
+        : 'Microphone permission was refused. Allow it via the address-bar icon, then reload.';
+    }
+    if (state === 'DISABLED') {
+      return 'Voice is switched off' + (DIAG.lastError ? ' (' + DIAG.lastError + ')' : '') +
+             '. Reload the page to try again.';
+    }
+    if (!DIAG.everStarted) {
+      return 'Voice hasn’t started in this browser' +
+             (DIAG.lastError ? ' (' + DIAG.lastError + ')' : '') +
+             '. Chrome is the only browser this works in reliably.';
+    }
+    if (!DIAG.everHeard) {
+      return 'Listening, but nothing has reached me yet. Check the right microphone ' +
+             'is selected and speak up — say “Jarvis”.';
+    }
+    if (state === 'AWAKENED') return 'Awake — give me a command.';
+    if (state === 'PROCESSING') return 'Working on it.';
+    return 'Listening. Say “Jarvis”, wait for “Yes, sir”, then give a command.' +
+           (BROWSER.isRealChrome ? '' : ' (This browser isn’t Chrome — voice may be unreliable.)');
+  }
+
   function disable(message) {
     shouldRun = false;
     setState('DISABLED');
@@ -784,7 +905,7 @@
   /* =========================================================================
    * SECTION 9 — WAKE-WORD STATE MACHINE
    * -------------------------------------------------------------------------
-   *   PASSIVE ──"captain"/"wake up captain"──► AWAKENED ──valid command──►
+   *   PASSIVE ──"jarvis"/"wake up jarvis"──► AWAKENED ──valid command──►
    *   PROCESSING ──action done──► PASSIVE
    *        ▲                                        │
    *        └────────── 6s timeout (silent) ─────────┘
@@ -881,7 +1002,7 @@
       for (var i = 0; i < WAKE_PATTERNS.length; i++) {
         if (WAKE_PATTERNS[i].test(probe)) {
           log('wake word detected');
-          // Enter AWAKENED first so any further "captain" is ignored (the
+          // Enter AWAKENED first so any further "Jarvis" is ignored (the
           // re-trigger guard below), then greet.
           toAwakened(false);
           speak('Yes, sir');
@@ -892,7 +1013,7 @@
     }
 
     /* ---- RE-TRIGGER GUARD -------------------------------------------- */
-    // In AWAKENED/PROCESSING we never re-run wake detection, so "captain"
+    // In AWAKENED/PROCESSING we never re-run wake detection, so "Jarvis"
     // spoken again (by JARVIS, the user, or someone nearby) cannot restart the
     // cycle mid-flight. PROCESSING additionally ignores all input.
     if (state === 'PROCESSING') return;
@@ -1238,10 +1359,11 @@
     }
 
     if (!SUPPORTED) {
-      // EDGE CASE: browser has no SpeechRecognition at all. Disable cleanly —
-      // the rest of DEB OS keeps working exactly as before.
-      disable('Voice control unavailable — this browser doesn’t support ' +
-              'the Web Speech API. Use Chrome for JARVIS.');
+      // EDGE CASE: browser has no SpeechRecognition at all (Firefox, most iOS).
+      // Disable cleanly — the rest of DEB OS keeps working exactly as before.
+      disable('Voice control doesn’t work in this browser' +
+              (BROWSER.isFirefox ? ' — Firefox has no speech recognition' : '') +
+              '. Open the site in Google Chrome to use JARVIS.');
       console.warn('[JARVIS] SpeechRecognition unsupported; module disabled.');
       return;
     }
@@ -1251,6 +1373,27 @@
 
     toPassive();
     if (CONFIG.autoStart) api.start();
+
+    // Say so up front when this isn't Chrome. The API may exist here and still
+    // never deliver a result (Brave blocks the service; some Chromium builds
+    // throttle it), and a permanently dim dot with no explanation is the worst
+    // possible outcome for someone who can't read the console.
+    if (!BROWSER.isRealChrome) {
+      notice(BROWSER.isBrave
+        ? 'Brave blocks voice recognition by default — open this site in Google Chrome for JARVIS.'
+        : (BROWSER.isMobile
+            ? 'Voice control needs Chrome on a computer; phone browsers stop listening in the background.'
+            : 'Voice control only works properly in Google Chrome. In this browser it may never respond.'));
+    }
+
+    // If recognition never even starts, say so rather than sitting there dim.
+    global.setTimeout(function () {
+      if (!shouldRun || state === 'DISABLED' || DIAG.everStarted) return;
+      notice('Voice couldn’t start in this browser' +
+             (DIAG.lastError ? ' (' + DIAG.lastError + ')' : '') +
+             '. Google Chrome is the supported browser. Tap this dot to retry.');
+      paint('disabled', 'NO VOICE');
+    }, 6000);
   }
 
   var api = {
@@ -1287,6 +1430,19 @@
     getState: function () {
       return { state: state, listening: running, muted: muted,
                awakeMsLeft: awakeTimer ? CONFIG.awakeWindowMs : 0 };
+    },
+
+    // Plain-language status, same text the indicator shows when clicked.
+    diagnose: diagnose,
+
+    // Raw detail for bug reports: JARVIS.report() in the console.
+    report: function () {
+      return {
+        version: VERSION, state: state, listening: running,
+        supported: SUPPORTED, synth: SYNTH_SUPPORTED,
+        browser: BROWSER, diag: DIAG, wake: 'jarvis',
+        lang: CONFIG.lang, ua: UA
+      };
     },
 
     // Test hook: feed a transcript straight into the state machine, exactly as

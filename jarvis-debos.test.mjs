@@ -128,7 +128,7 @@ async function unmuted(sb) {
 // Speak a wake word, then a command, then wait for the cycle to finish.
 async function say(env, command) {
   const sr = MockSR.last;
-  sr.hear('captain');
+  sr.hear('jarvis');
   await unmuted(env.sb);
   sr.hear(command);
   await sleep(60);
@@ -152,7 +152,7 @@ console.log('\nA · subject page (no in-memory array — adapter writes storage)
   // First-run discoverability hint (once per browser session, non-blocking).
   await sleep(1950);
   const notices = env.sb.document.body.children.filter(c => c.id === 'jarvis-notice');
-  ok(notices.length === 1 && /Captain/.test(notices[0].textContent),
+  ok(notices.length === 1 && /Jarvis/.test(notices[0].textContent),
      'first-run hint names the wake word', 'got: ' + notices.map(n => n.textContent).join(''));
   ok(env.sessionStorage.getItem('debos.jarvis.hinted') === '1', '  → flagged so it shows only once per session');
 
