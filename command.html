@@ -211,70 +211,11 @@
   @keyframes softPulse{0%,100%{opacity:.5}50%{opacity:1}}
   @keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,255,.55)}70%{box-shadow:0 0 0 12px rgba(0,245,255,0)}}
 
-  /* ---------- Nav bar ---------- */
-  .nav{
-    position:sticky;top:0;z-index:20;
-    background:var(--nav-bg);
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    border-bottom:1px solid var(--panel-border);
-    padding:14px 30px;
-    display:flex;align-items:center;gap:32px;
-    animation:fadeUp .5s var(--ease) both;
-  }
-  .nav::after{
-    content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(0,245,255,.55),transparent);
-    opacity:.6;
-  }
-  .nav .logo{font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink-primary);display:flex;align-items:center;gap:11px}
-  .nav .logo::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent-warm);box-shadow:var(--glow-cyan)}
-  .nav-links{display:flex;gap:4px;margin-left:auto;margin-right:auto}
-  .nav-links a{
-    padding:8px 14px;border-radius:7px;
-    font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;
-    color:var(--ink-dim);
-    transition:color .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease);
-  }
-  .nav-links a:hover{color:var(--ink-primary);background:var(--key-hover)}
-  .nav-links a.current{color:var(--accent-warm);background:var(--field-bg-active);box-shadow:inset 0 0 0 1px rgba(0,245,255,.3)}
-  .nav-hud{display:flex;align-items:center;gap:16px}
-  .nav-hud .clock{font-family:var(--font-mono);font-size:16px;color:var(--ink-warm);font-variant-numeric:tabular-nums;letter-spacing:.06em;font-weight:500}
-  /* Stacked info block (date + NEET row / chip row) */
-  .nav-hud .hud-stack{display:flex;flex-direction:column;gap:7px;align-items:flex-end;padding:0 4px 0 12px;border-left:1px solid var(--divider)}
-  .nav-hud > .chip-row{padding:0 4px 0 12px;border-left:1px solid var(--divider)}
-  .nav-hud .hud-meta{display:flex;align-items:baseline;gap:10px;font-family:var(--font-body);line-height:1.15}
-  .nav-hud .hud-meta .meta-date{font-size:14.5px;font-weight:600;color:var(--ink-warm);letter-spacing:-.005em}
-  .nav-hud .hud-meta .meta-sep{font-size:13px;color:var(--divider);font-weight:400}
-  .nav-hud .hud-meta .meta-neet{position:relative;font-size:14.5px;font-weight:500;color:var(--ink-warm);cursor:default;padding:2px 0;border-bottom:1px dashed transparent;transition:border-color .2s var(--ease)}
-  .nav-hud .hud-meta .meta-neet:hover,
-  .nav-hud .hud-meta .meta-neet:focus-visible{border-bottom-color:rgba(0,245,255,.4);outline:none}
-  .nav-hud .hud-meta .neet-days{color:var(--accent-warm);font-weight:700;font-variant-numeric:tabular-nums;margin-right:5px;letter-spacing:-.005em;text-shadow:0 0 12px rgba(0,245,255,.35)}
-  .nav-hud .hud-meta .neet-label{color:var(--ink-warm);opacity:.9}
-  /* Popover opens toward the left when in the nav so it doesn't overflow */
-  .nav-hud .hud-meta .neet-popover{left:auto;right:0;top:calc(100% + 12px)}
-  .nav-hud .hud-meta .neet-popover::before{left:12%;right:12%}
-  /* Chip row (NEET | Syllabus) */
-  .nav-hud .chip-row{display:flex;gap:8px}
-  .nav-hud .hud-chip{
-    display:inline-flex;align-items:baseline;gap:8px;
-    padding:5px 12px;border-radius:100px;
-    border:1px solid var(--panel-border);
-    background:var(--field-bg);
-    transition:border-color .22s var(--ease), box-shadow .22s var(--ease);
-  }
-  .nav-hud .hud-chip:hover{border-color:var(--border-strong);box-shadow:0 0 14px rgba(0,245,255,.15)}
-  .nav-hud .hud-chip .n{font-family:var(--font-mono);font-size:14px;color:var(--accent-warm);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 0 10px rgba(0,245,255,.3)}
-  .nav-hud .hud-chip .l{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.22em;text-transform:uppercase;font-weight:500}
-
-  .icon-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--field-bg);color:var(--ink-dim);display:inline-flex;align-items:center;justify-content:center;transition:all .22s var(--ease);cursor:pointer}
-  .icon-btn:hover{color:var(--accent-warm);border-color:var(--border-strong);background:var(--key-hover);box-shadow:var(--glow-cyan)}
-  .icon-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .icon-btn.on{color:var(--accent-warm);border-color:var(--border-strong);box-shadow:var(--glow-cyan)}
+  /* Nav has been removed. The hero owns the countdown chips and NEET popover now. */
 
   /* ---------- Workspace layout: sidebar + main ---------- */
-  :root{--nav-h:68px;--sidebar-w:300px}
-  .workspace{display:grid;grid-template-columns:var(--sidebar-w) 1fr;align-items:start;min-height:calc(100vh - var(--nav-h))}
+  :root{--nav-h:0px;--sidebar-w:300px}
+  .workspace{display:grid;grid-template-columns:var(--sidebar-w) 1fr;align-items:start;min-height:100vh}
   .sidebar{
     position:sticky;top:var(--nav-h);align-self:start;
     height:calc(100vh - var(--nav-h));
@@ -313,18 +254,48 @@
   .side-card .card-label{margin-bottom:12px}
 
   /* Streak (sidebar variant) */
-  .side-card.streak-card .streak-num{font-family:var(--font-display);font-weight:800;font-size:56px;line-height:.95;color:var(--ink-primary);letter-spacing:-.01em;background:linear-gradient(180deg,#eaffff,var(--accent-warm) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(0,245,255,.35))}
-  .side-card.streak-card .unit{font-family:var(--font-mono);font-size:10px;color:var(--ink-dim);letter-spacing:.28em;text-transform:uppercase;margin-top:8px;font-weight:500}
-  .side-card.streak-card .flame{position:absolute;top:16px;right:18px;width:20px;height:20px;color:var(--accent-warm);opacity:.65;filter:drop-shadow(0 0 6px rgba(0,245,255,.4))}
+  /* Compact streak card — reduced numeric emphasis so it takes less vertical room */
+  .side-card.streak-card{padding:14px 16px}
+  .side-card.streak-card .card-label{margin-bottom:6px}
+  .side-card.streak-card .streak-num{font-family:var(--font-display);font-weight:800;font-size:34px;line-height:.95;color:var(--ink-primary);letter-spacing:-.01em;background:linear-gradient(180deg,#eaffff,var(--accent-warm) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 12px rgba(0,245,255,.3))}
+  .side-card.streak-card .unit{font-family:var(--font-mono);font-size:9px;color:var(--ink-dim);letter-spacing:.28em;text-transform:uppercase;margin-top:4px;font-weight:500}
+  .side-card.streak-card .flame{position:absolute;top:12px;right:14px;width:15px;height:15px;color:var(--accent-warm);opacity:.65;filter:drop-shadow(0 0 5px rgba(0,245,255,.4))}
 
   /* Reward Gate (sidebar variant — ring + inline info) */
-  .side-card.gate-card .gate-ring{display:flex;align-items:center;gap:16px;margin-top:4px}
-  .side-card.gate-card .gate-ring svg{width:78px;height:78px;transform:rotate(-90deg);flex:none;filter:drop-shadow(0 0 6px rgba(0,245,255,.3))}
-  .side-card.gate-card .gate-ring .g-track{fill:none;stroke:var(--border);stroke-width:5}
-  .side-card.gate-card .gate-ring .g-prog{fill:none;stroke:url(#warmGrad);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .8s var(--ease)}
-  .side-card.gate-card .g-pct{font-family:var(--font-display);font-weight:800;font-size:28px;color:var(--accent-warm);letter-spacing:-.01em;line-height:1;text-shadow:0 0 12px rgba(0,245,255,.4)}
-  .side-card.gate-card .g-sub{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);letter-spacing:.22em;text-transform:uppercase;margin-top:6px;font-weight:500}
-  .side-card.gate-card .g-note{font-size:11.5px;color:var(--ink-dim);margin-top:6px;line-height:1.35}
+  /* Compact reward-gate — smaller ring, tighter text, less padding */
+  .side-card.gate-card{padding:14px 16px}
+  .side-card.gate-card .card-label{margin-bottom:6px}
+  .side-card.gate-card .gate-ring{display:flex;align-items:center;gap:12px;margin-top:2px}
+  .side-card.gate-card .gate-ring svg{width:54px;height:54px;transform:rotate(-90deg);flex:none;filter:drop-shadow(0 0 5px rgba(0,245,255,.3))}
+  .side-card.gate-card .gate-ring .g-track{fill:none;stroke:var(--border);stroke-width:6}
+  .side-card.gate-card .gate-ring .g-prog{fill:none;stroke:url(#warmGrad);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s var(--ease)}
+  .side-card.gate-card .g-pct{font-family:var(--font-display);font-weight:800;font-size:20px;color:var(--accent-warm);letter-spacing:-.01em;line-height:1;text-shadow:0 0 10px rgba(0,245,255,.4)}
+  .side-card.gate-card .g-sub{font-family:var(--font-mono);font-size:8.5px;color:var(--ink-faint);letter-spacing:.22em;text-transform:uppercase;margin-top:4px;font-weight:500}
+  .side-card.gate-card .g-note{font-size:10.5px;color:var(--ink-dim);margin-top:3px;line-height:1.3}
+
+  /* Theme-toggle sidebar tile — occupies the space freed by the two compacted cards above */
+  .side-card.theme-card{
+    padding:12px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .side-card.theme-card .card-label{margin-bottom:0;flex:1}
+  .theme-toggle{
+    display:inline-flex;align-items:center;
+    padding:6px;border-radius:99px;
+    background:var(--field-bg);
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition:border-color .22s var(--ease),background .22s var(--ease);
+  }
+  .theme-toggle:hover{border-color:var(--border-strong);background:var(--field-bg-active)}
+  .theme-toggle .slot{
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-faint);
+    transition:color .22s var(--ease),background .22s var(--ease);
+  }
+  .theme-toggle .slot.active{color:var(--accent-warm);background:rgba(0,245,255,.10);box-shadow:0 0 8px rgba(0,245,255,.3)}
+  .theme-toggle .slot svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
   /* Subject bars (sidebar variant — tighter) */
   .side-card.subj-card .subj-bars{display:flex;flex-direction:column;gap:11px}
@@ -729,6 +700,68 @@
     .tracker-card{min-height:120px}
   }
 
+  /* ---------- Tools & Links grid ---------- */
+  .tools-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  .tool-card{
+    position:relative;overflow:hidden;
+    display:flex;flex-direction:column;gap:10px;
+    padding:16px 14px 14px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    box-shadow:var(--panel-shadow);
+    color:var(--ink-primary);
+    text-decoration:none;
+    min-height:130px;
+    transition:transform .28s var(--ease),border-color .28s var(--ease),box-shadow .28s var(--ease);
+    cursor:pointer;
+    isolation:isolate;
+  }
+  .tool-card::before{
+    content:'';position:absolute;left:14%;right:14%;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent-warm),transparent);
+    opacity:.5;transition:opacity .28s var(--ease);
+  }
+  .tool-card::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(220px 140px at 100% 100%,rgba(0,245,255,.06),transparent 65%);
+    opacity:0;transition:opacity .28s var(--ease);
+    pointer-events:none;z-index:-1;
+  }
+  .tool-card:hover{
+    transform:translateY(-3px);
+    border-color:var(--border-strong);
+    box-shadow:var(--panel-shadow),0 0 22px rgba(0,245,255,.16);
+  }
+  .tool-card:hover::before{opacity:.9}
+  .tool-card:hover::after{opacity:1}
+  .tool-card:active{transform:translateY(-1px)}
+  .tool-mark{
+    width:42px;height:42px;
+    color:var(--accent-warm);
+    display:flex;align-items:center;justify-content:center;
+    filter:drop-shadow(0 0 10px rgba(0,245,255,.35));
+    transition:transform .3s var(--ease),filter .3s var(--ease);
+    font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:.02em;
+  }
+  .tool-mark svg{width:100%;height:100%;display:block}
+  .tool-card:hover .tool-mark{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(0,245,255,.55))}
+  .tool-body{margin-top:auto;display:flex;flex-direction:column;gap:4px}
+  .tool-name{
+    font-family:var(--font-body);font-weight:600;font-size:13px;
+    color:var(--ink-primary);letter-spacing:.04em;text-transform:uppercase;line-height:1.15;
+  }
+  .tool-open{
+    font-family:var(--font-mono);font-size:8.5px;
+    color:var(--accent-warm);letter-spacing:.28em;text-transform:uppercase;font-weight:500;
+    display:inline-flex;align-items:center;gap:5px;
+    opacity:.85;
+    transition:gap .22s var(--ease),opacity .22s var(--ease);
+  }
+  .tool-card:hover .tool-open{gap:8px;opacity:1;text-shadow:0 0 10px rgba(0,245,255,.4)}
+  @media (max-width: 1100px){ .tools-grid{grid-template-columns:repeat(3,1fr)} }
+  @media (max-width: 520px){ .tools-grid{grid-template-columns:1fr 1fr;gap:10px} .tool-card{min-height:110px;padding:12px} .tool-mark{width:36px;height:36px} }
+
   /* ---------- Subjects grid ---------- */
   .subjects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .subject-card{
@@ -825,14 +858,11 @@
     .row-3 > *:first-child{grid-column:1/-1}
   }
   @media (max-width: 900px){
-    .nav-links{display:none}
-    .nav-hud .hud-stack, .nav-hud > .chip-row{display:none}
     .row-2{grid-template-columns:1fr}
     .row-3-eq{grid-template-columns:1fr}
     .now-card{grid-template-columns:1fr;text-align:left}
     .now-ring{margin-top:8px}
     main{padding:28px 18px 60px}
-    .nav{padding:12px 18px}
     footer{padding:0 18px}
   }
   @media (max-width: 720px){
@@ -863,32 +893,6 @@
     </linearGradient>
   </defs>
 </svg>
-
-<nav class="nav">
-  <a class="logo" href="index.html">DEB OS</a>
-  <div class="nav-links">
-    <a href="command.html" class="current">Command</a>
-    <a href="physics.html">Physics</a>
-    <a href="chemistry.html">Chemistry</a>
-    <a href="biology.html">Biology</a>
-    <a href="focus.html">Focus</a>
-    <a href="weekly.html">Weekly</a>
-    <a href="monthly.html">Monthly</a>
-  </div>
-  <div class="nav-hud">
-    <div class="clock" id="navClock">--:--:--</div>
-    <div class="chip-row">
-      <div class="hud-chip"><span class="n" id="navNeet">&mdash;</span><span class="l">NEET</span></div>
-      <div class="hud-chip"><span class="n" id="navSyll">&mdash;</span><span class="l">Syllabus</span></div>
-    </div>
-    <button class="icon-btn" id="audioBtn" type="button" title="Ambient audio" aria-label="Toggle ambient audio">
-      <svg viewBox="0 0 24 24" id="audioIcon"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
-    </button>
-    <button class="icon-btn" id="themeBtn" type="button" title="Toggle theme" aria-label="Toggle theme">
-      <svg viewBox="0 0 24 24" id="themeIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-  </div>
-</nav>
 
 <div class="workspace">
 
@@ -921,6 +925,18 @@
       <div class="subj-bar physics"><span class="label">Physics</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="val">0m</span></div>
       <div class="subj-bar chemistry"><span class="label">Chemistry</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="val">0m</span></div>
       <div class="subj-bar biology"><span class="label">Biology</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="val">0m</span></div>
+    </div>
+  </div>
+
+  <div class="side-card theme-card">
+    <div class="card-label"><span class="dot"></span>Theme</div>
+    <div class="theme-toggle" id="themeToggle" role="switch" aria-label="Toggle theme" tabindex="0">
+      <div class="slot" data-mode="dark">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </div>
+      <div class="slot" data-mode="light">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </div>
     </div>
   </div>
 </aside>
@@ -1044,6 +1060,113 @@
         <div class="tc-body">
           <div class="tc-name">Weekly Performance Tracker</div>
           <div class="tc-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+      <a class="tracker-card" href="focus-tracker.html" aria-label="Open Focus Tracker">
+        <span class="tc-emoji" aria-hidden="true">😏</span>
+        <div class="tc-body">
+          <div class="tc-name">Focus Tracker</div>
+          <div class="tc-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- TOOLS & LINKS -->
+  <section>
+    <div class="section-header">
+      <h2 class="section-title">Tools &amp; Links</h2>
+      <span class="section-sub">Study utilities</span>
+    </div>
+    <div class="tools-grid">
+      <!-- Timer & Pomodoro (internal) -->
+      <a class="tool-card" href="focus.html" aria-label="Open Timer &amp; Pomodoro">
+        <div class="tool-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="52" r="34" fill="none" stroke="currentColor" stroke-width="4"/>
+            <rect x="42" y="10" width="16" height="6" rx="1.5" fill="currentColor"/>
+            <line x1="50" y1="52" x2="50" y2="26" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <line x1="50" y1="52" x2="68" y2="52" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="50" cy="52" r="3.2" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="tool-body">
+          <div class="tool-name">Timer &amp; Pomodoro</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+
+      <!-- Claude (external, opens in new tab) -->
+      <a class="tool-card" href="https://claude.ai" target="_blank" rel="noopener noreferrer" aria-label="Open Claude">
+        <div class="tool-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none">
+              <line x1="50" y1="14" x2="50" y2="86"/>
+              <line x1="14" y1="50" x2="86" y2="50"/>
+              <line x1="24" y1="24" x2="76" y2="76"/>
+              <line x1="24" y1="76" x2="76" y2="24"/>
+            </g>
+            <circle cx="50" cy="50" r="6" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="tool-body">
+          <div class="tool-name">Claude</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+
+      <!-- Grok (external) -->
+      <a class="tool-card" href="https://grok.com" target="_blank" rel="noopener noreferrer" aria-label="Open Grok">
+        <div class="tool-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="currentColor" stroke-width="10" stroke-linecap="square" fill="none">
+              <line x1="20" y1="20" x2="80" y2="80"/>
+              <line x1="80" y1="20" x2="20" y2="80"/>
+            </g>
+          </svg>
+        </div>
+        <div class="tool-body">
+          <div class="tool-name">Grok</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+
+      <!-- ChatGPT (external) -->
+      <a class="tool-card" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT">
+        <div class="tool-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+              <path d="M50 18 A 26 26 0 0 1 76 44"/>
+              <path d="M76 44 A 26 26 0 0 1 76 74"/>
+              <path d="M76 74 A 26 26 0 0 1 50 88"/>
+              <path d="M50 88 A 26 26 0 0 1 24 60"/>
+              <path d="M24 60 A 26 26 0 0 1 24 30"/>
+              <path d="M24 30 A 26 26 0 0 1 50 18"/>
+            </g>
+            <circle cx="50" cy="53" r="4" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="tool-body">
+          <div class="tool-name">ChatGPT</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+
+      <!-- PW / Physics Wallah (external) -->
+      <a class="tool-card" href="https://www.pw.live" target="_blank" rel="noopener noreferrer" aria-label="Open PW">
+        <div class="tool-mark" aria-hidden="true">PW</div>
+        <div class="tool-body">
+          <div class="tool-name">PW</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
+        </div>
+      </a>
+
+      <!-- ALLEN (external) -->
+      <a class="tool-card" href="https://www.allen.ac.in" target="_blank" rel="noopener noreferrer" aria-label="Open ALLEN">
+        <div class="tool-mark" aria-hidden="true">A</div>
+        <div class="tool-body">
+          <div class="tool-name">ALLEN</div>
+          <div class="tool-open">Open <span aria-hidden="true">&rarr;</span></div>
         </div>
       </a>
     </div>
@@ -1207,85 +1330,54 @@
   }
 
   // ---------- Theme ----------
+  // ---------- Theme (sidebar segmented toggle; nav is gone) ----------
   function applyTheme(t){
     document.documentElement.setAttribute('data-theme', t);
     LS.set('debos.theme', t);
-    var themeIcon = $('themeIcon');
-    if (t === 'dark'){
-      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    } else {
-      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+    var tt = $('themeToggle');
+    if (tt){
+      tt.querySelectorAll('.slot').forEach(function(s){
+        s.classList.toggle('active', s.getAttribute('data-mode') === t);
+      });
     }
     var mt = document.querySelector('meta[name="theme-color"]');
-    if (mt) mt.setAttribute('content', t === 'dark' ? '#050308' : '#f5efe4');
+    if (mt) mt.setAttribute('content', t === 'dark' ? '#060608' : '#f0ede6');
   }
   applyTheme(LS.get('debos.theme','dark'));
-  $('themeBtn').addEventListener('click', function(){
-    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  });
-
-  // ---------- Audio ----------
-  var audioCtx=null, noiseGain=null;
-  function setAudioIcon(on){
-    $('audioBtn').classList.toggle('on', on);
-    $('audioIcon').innerHTML = on
-      ? '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>'
-      : '<path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
-  }
-  setAudioIcon(false);
-  function ensureAudio(){
-    if (audioCtx) return;
-    var AC=window.AudioContext||window.webkitAudioContext;
-    if (!AC) return;
-    audioCtx=new AC();
-    var sr=audioCtx.sampleRate, len=sr*2;
-    var buf=audioCtx.createBuffer(1,len,sr);
-    var data=buf.getChannelData(0);
-    var lastOut=0;
-    for (var i=0;i<len;i++){
-      var w=Math.random()*2-1;
-      lastOut=(lastOut+0.018*w)/1.02;
-      data[i]=lastOut*3.2;
-    }
-    var src=audioCtx.createBufferSource();
-    src.buffer=buf;src.loop=true;
-    noiseGain=audioCtx.createGain();
-    noiseGain.gain.value=0;
-    src.connect(noiseGain).connect(audioCtx.destination);
-    src.start(0);
-  }
-  $('audioBtn').addEventListener('click', function(){
-    ensureAudio();
-    if (!audioCtx) return;
-    if (audioCtx.state==='suspended') audioCtx.resume();
-    var now=audioCtx.currentTime;
-    var on=(noiseGain.gain.value<0.001);
-    noiseGain.gain.cancelScheduledValues(now);
-    noiseGain.gain.linearRampToValueAtTime(on?0.12:0, now+0.5);
-    setAudioIcon(on);
-    LS.set('debos.audio', on?'on':'off');
-  });
+  (function(){
+    var tt = $('themeToggle');
+    if (!tt) return;
+    function toggle(){ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    tt.addEventListener('click', function(e){
+      // If a specific slot was clicked, jump directly to that mode
+      var s = e.target.closest && e.target.closest('.slot');
+      if (s){ applyTheme(s.getAttribute('data-mode')); return; }
+      toggle();
+    });
+    tt.addEventListener('keydown', function(e){
+      if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); toggle(); }
+    });
+  })();
 
   // ---------- Clock + countdowns ----------
+  // Nav clock is gone; only the hero chips + inline "days to NEET" line need updating.
   function pad2(n){return n<10?'0'+n:''+n}
   function fmtFullDate(d){return d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
   var neetDate=new Date(CONFIG.NEET_DATE), syllDate=new Date(CONFIG.SYLLABUS_DATE), missionStart=new Date(CONFIG.MISSION_START);
   function daysUntil(t){var d=t.getTime()-Date.now();return d<=0?0:Math.floor(d/86400000)}
+  function setText(id, val){ var el = $(id); if (el) el.textContent = val; }
   function updateChrome(){
     var now=new Date();
-    $('navClock').textContent=pad2(now.getHours())+':'+pad2(now.getMinutes())+':'+pad2(now.getSeconds());
     var nd=daysUntil(neetDate), sd=daysUntil(syllDate);
     var neetTxt = nd ? nd.toLocaleString()+'d' : '✓';
     var syllTxt = sd ? sd.toLocaleString()+'d' : '✓';
-    $('navNeet').textContent  = neetTxt;
-    $('navSyll').textContent  = syllTxt;
-    $('heroNeetN').textContent = neetTxt;
-    $('heroSyllN').textContent = syllTxt;
-    $('fullDate').textContent=fmtFullDate(now);
-    $('neetInlineDays').textContent=nd.toLocaleString();
+    setText('heroNeetN', neetTxt);
+    setText('heroSyllN', syllTxt);
+    setText('fullDate',  fmtFullDate(now));
+    setText('neetInlineDays', nd.toLocaleString());
   }
   updateChrome();
-  setInterval(updateChrome, 1000);
+  setInterval(updateChrome, 60000); // no longer showing seconds — 1min tick is enough
 
   // ---------- NEET runway popover (Aug 23 2026 -> May 4 2027) ----------
   (function(){
