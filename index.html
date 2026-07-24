@@ -1002,7 +1002,7 @@
         LS.set('debos.pin.attempts','0');
         SS.set('debos.session.unlocked','1');
         setView('granted');
-        setTimeout(function(){ if (state.unlocked) proceedToCommand(); }, 1600);
+        /* No auto-forward — user must click the "Enter Command Center" button. */
       } else {
         var attempts = LS.getNum('debos.pin.attempts', 0) + 1;
         LS.set('debos.pin.attempts', String(attempts));
@@ -1052,7 +1052,7 @@
           state.unlocked = true;
           SS.set('debos.session.unlocked','1');
           setView('granted');
-          setTimeout(function(){ if (state.unlocked) proceedToCommand(); }, 1600);
+          /* No auto-forward — user must click the "Enter Command Center" button. */
         } else {
           newPinError.innerHTML = 'Codes don&rsquo;t match &mdash; try again';
           newPinError.classList.add('on');
@@ -1247,9 +1247,10 @@
       } else if (state.view === 'newpin'){
         if (/^\d$/.test(e.key)){ e.preventDefault(); pressNewPin(e.key); }
         else if (e.key === 'Backspace'){ e.preventDefault(); pressNewPin('del'); }
-      } else if (state.view === 'granted'){
-        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); proceedToCommand(); }
       }
+      /* Deliberate: no global Enter/Space handler on 'granted' view — the button
+         is still keyboard-accessible when focused (browser default), but a
+         wayward key press won't skip the deliberate click the user asked for. */
       return;
     }
     if (state.triggered) return;
