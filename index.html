@@ -124,8 +124,38 @@
 
   /* ---------- Stage & canvases ---------- */
   .stage{position:fixed;inset:0;background:radial-gradient(ellipse 120% 90% at 50% 48%, var(--bg-warm) 0%, var(--bg-mid) 52%, var(--bg-deep) 100%);overflow:hidden}
+  /* Nebula haze — pure CSS radial-gradients, GPU composited, ~0 CPU cost.
+     Adds a sense of colored cosmic clouds hanging in the void. */
+  .nebula{
+    position:absolute;inset:-6%;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 42% 32% at 18% 22%, rgba(120,80,220,.20), transparent 62%),
+      radial-gradient(ellipse 32% 28% at 82% 30%, rgba(0,180,220,.14), transparent 62%),
+      radial-gradient(ellipse 46% 34% at 62% 82%, rgba(140,80,200,.16), transparent 62%),
+      radial-gradient(ellipse 28% 24% at 26% 78%, rgba(0,150,200,.10), transparent 62%);
+    opacity:.62;
+    animation: nebulaDrift 140s ease-in-out infinite alternate;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  /* Star field — canvas painted once, kept crisp; the WHOLE layer rotates
+     slowly via CSS transform (GPU-accelerated), giving the sense that the
+     observer is drifting around the black hole in vast space. */
+  #stars{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    pointer-events:none;z-index:0;opacity:.9;
+    animation: sceneSpin 360s linear infinite;
+    will-change: transform;
+    transform-origin: 50% 50%;
+    transform: translateZ(0);
+  }
   #bh{position:absolute;inset:0;width:100%;height:100%;display:block;will-change:opacity;z-index:1}
   #ambient{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease);z-index:3}
+  @keyframes sceneSpin{ from{transform:translateZ(0) rotate(0deg)} to{transform:translateZ(0) rotate(360deg)} }
+  @keyframes nebulaDrift{
+    0%  { transform: translate3d(0,0,0) rotate(0deg) scale(1) }
+    100%{ transform: translate3d(-2%,1.4%,0) rotate(3deg) scale(1.04) }
+  }
   .overlay-backdrop{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 50%, rgba(8,4,2,.5) 0%, rgba(3,2,6,.85) 70%);opacity:0;transition:opacity 1.2s var(--ease);pointer-events:none;z-index:2}
 
   /* Big invisible tap zone during intro */
@@ -325,11 +355,15 @@
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
     .hint{animation:none}
+    /* Freeze the "in space" layers — still image, no motion. */
+    .nebula,#stars{animation:none!important;transform:none!important}
   }
 </style>
 </head>
 <body>
 <div class="stage">
+  <div class="nebula" aria-hidden="true"></div>
+  <canvas id="stars" aria-hidden="true"></canvas>
   <canvas id="bh" aria-hidden="true"></canvas>
   <div class="overlay-backdrop" id="overlayBackdrop" aria-hidden="true"></div>
   <canvas id="ambient" aria-hidden="true"></canvas>
@@ -574,10 +608,20 @@
     if (s > 0){ streakN.textContent = s; streakEl.classList.add('on'); }
   })();
 
+  // ---------- Adaptive quality: scale particle counts to screen size + device tier ----------
+  // Low-end phones (small screens + <4GB RAM if detectable) get a fraction of the particles.
+  // High-DPI desktops still get the full fireworks. This keeps the animation buttery on cheap Androids
+  // and old laptops without visibly hurting the look on flagship devices.
+  var _area = window.innerWidth * window.innerHeight;
+  var _mem  = (navigator.deviceMemory || 4);   // deviceMemory in GB (undefined on iOS Safari → assume 4)
+  var _tier = _mem < 3 || _area < 400*700 ? 0.35     // very low-end phones
+            : _area < 900*600            ? 0.55     // mid-range mobile
+            : _area < 1440*900           ? 0.80     // laptops / tablets
+            :                              1.00;    // desktop / HiDPI
   // ---------- Black-hole particles (init once) ----------
   var disk = [], buf = [], ring = [];
   (function initParticles(){
-    var N = reducedMotion ? 600 : 1500;
+    var N = Math.round((reducedMotion ? 500 : 1500) * _tier);
     for (var i = 0; i < N; i++){
       var u = Math.pow(Math.random(), 0.55);
       var rMul = 1.18 + u * 2.35;
@@ -585,11 +629,50 @@
       disk.push({ rMul: rMul, b0: Math.random()*Math.PI*2, vj: Math.random()*2-1, seed: Math.random(), hot: hot });
       buf.push({ x:0,y:0,dx:0,dy:0,size:1,front:false,col:'#000' });
     }
-    var M = reducedMotion ? 200 : 520;
+    var M = Math.round((reducedMotion ? 180 : 520) * _tier);
     for (var j = 0; j < M; j++){
       ring.push({ a0: Math.random()*Math.PI*2, rr: 1.02 + Math.random()*0.16, seed: Math.random() });
     }
   })();
+
+  // ---------- Star field (painted once — zero per-frame CPU cost) ----------
+  // The layer rotates via CSS transform on the whole canvas, so we never need to redraw.
+  var starsCanvas = document.getElementById('stars');
+  var starsCtx = starsCanvas.getContext('2d');
+  function paintStars(){
+    var w = starsCanvas.width, h = starsCanvas.height;
+    // Paint a square region larger than the viewport so the rotating canvas never
+    // shows an empty corner when it spins past the diagonal.
+    var pad = Math.max(w, h) * 0.5;
+    starsCtx.clearRect(0, 0, w, h);
+    var count = reducedMotion
+      ? Math.round(50 * _tier)
+      : Math.round((60 + (w*h)/50000) * _tier);
+    count = Math.max(30, Math.min(count, 260));
+    for (var i = 0; i < count; i++){
+      var x = -pad + Math.random() * (w + pad*2);
+      var y = -pad + Math.random() * (h + pad*2);
+      var r = 0.4 + Math.random() * (Math.random() < 0.06 ? 2.4 : 1.3);  // occasional bigger star
+      var a = 0.25 + Math.random() * 0.65;
+      // 88% cool cyan-white, 12% warm amber for variety
+      var warm = Math.random() < 0.12;
+      starsCtx.fillStyle = warm
+        ? 'rgba(255,210,160,'+a.toFixed(3)+')'
+        : 'rgba(210,240,255,'+a.toFixed(3)+')';
+      starsCtx.beginPath();
+      starsCtx.arc(x, y, r, 0, Math.PI*2);
+      starsCtx.fill();
+      // Big stars get a soft halo — still just 1 extra draw
+      if (r > 1.5){
+        starsCtx.fillStyle = warm
+          ? 'rgba(255,210,160,'+(a*0.20).toFixed(3)+')'
+          : 'rgba(180,220,255,'+(a*0.22).toFixed(3)+')';
+        starsCtx.beginPath();
+        starsCtx.arc(x, y, r*3.2, 0, Math.PI*2);
+        starsCtx.fill();
+      }
+    }
+  }
 
   // ---------- Ambient dust (initialized after fade) ----------
   var dust = [];
@@ -613,11 +696,23 @@
   var dpr = 1;
   var resizePending = false;
   function resize(){
-    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    // Cap DPR harder on low-tier devices — halves the raster load on high-DPI phones
+    var dprCap = _tier < 0.6 ? 1.15 : 1.5;
+    dpr = Math.min(window.devicePixelRatio || 1, dprCap);
     var w = Math.round(window.innerWidth * dpr);
     var h = Math.round(window.innerHeight * dpr);
     canvas.width = w; canvas.height = h;
     ambientCanvas.width = w; ambientCanvas.height = h;
+    // Star field is oversized so the slow rotation never reveals a bare corner.
+    // Painted ONCE per resize — zero per-frame cost afterwards.
+    var overscan = Math.round(Math.max(w, h) * 1.5);
+    starsCanvas.width = overscan; starsCanvas.height = overscan;
+    starsCanvas.style.width = ((overscan / dpr))+'px';
+    starsCanvas.style.height = ((overscan / dpr))+'px';
+    starsCanvas.style.left = ((window.innerWidth - overscan/dpr) / 2)+'px';
+    starsCanvas.style.top  = ((window.innerHeight - overscan/dpr) / 2)+'px';
+    starsCanvas.style.inset = 'auto';   // override the inset:0 default so the centering above sticks
+    paintStars();
   }
   function onResize(){
     if (resizePending) return;
