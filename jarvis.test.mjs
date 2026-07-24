@@ -308,8 +308,19 @@ console.log('\nunsupported browser (separate context)');
   let threw = null;
   try { vm.runInContext(src, sb, { filename: 'jarvis.js' }); } catch (e) { threw = e; }
   ok(!threw, 'module loads without throwing');
-  ok(sb.JARVIS.supported === false && sb.JARVIS.getState().state === 'DISABLED',
-     'disables itself cleanly instead of breaking the page');
+  ok(sb.JARVIS.supported === false, 'reports no support');
+  ok(sb.JARVIS.getState().listening === false, 'never starts a recogniser it cannot use');
+  // It now waits a moment in case jarvis-offline.js registers a replacement ear
+  // (that's how Brave and Firefox get voice at all), then explains itself.
+  ok(sb.JARVIS.getState().state !== 'DISABLED',
+     'holds a grace window before declaring defeat');
+  ok(/Chrome|speech recognition/i.test(sb.JARVIS.diagnose()),
+     '  → and can already explain itself if asked', sb.JARVIS.diagnose());
+  await sleep(3300);
+  ok(sb.JARVIS.getState().state === 'DISABLED',
+     'no engine arrived → disables cleanly instead of breaking the page');
+  ok(/Chrome/.test(byId['jarvis-notice'].textContent),
+     '  → and points the user at Chrome');
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

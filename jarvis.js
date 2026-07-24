@@ -596,8 +596,14 @@
     // the most reliable moment to (re)start recognition in stricter browsers.
     if (root.addEventListener) {
       root.addEventListener('click', function () {
+        // An external engine may need this gesture: microphone permission and
+        // a one-time model download should both be things the user opts into.
+        if (external && external.enable) {
+          var st = (external.status && external.status()) || {};
+          if (!st.ready && !st.loading) { external.enable(); return; }
+        }
         notice(diagnose());
-        if (shouldRun && !running && !permissionDenied) startRecognition();
+        if (!external && shouldRun && !running && !permissionDenied) startRecognition();
       });
     }
   }
@@ -729,6 +735,21 @@
    * SECTION 8 — RECOGNITION LIFECYCLE (continuous + auto-restart)
    * =======================================================================*/
 
+  /* -------------------------------------------------------------------------
+   * The ear is pluggable. By default it's the browser's own SpeechRecognition.
+   * Browsers that refuse to implement it (Firefox) or that create the object
+   * and then never return results (Brave, deliberately — Google's speech
+   * service is licensed to Chrome only) can supply a replacement recogniser
+   * through useExternalRecognizer(), and everything downstream — wake word,
+   * state machine, grammar, indicator — carries on unchanged.
+   *
+   * An external recogniser is any object shaped like:
+   *   { name, start(), stop(), enable()?, status()? }
+   * and it feeds text in through JARVIS.ingest(). See jarvis-offline.js.
+   * ---------------------------------------------------------------------- */
+  var external = null;
+  var externalPending = false;   // waiting to see if a replacement registers
+
   var recognition = null;
   var running = false;        // recogniser believed to be live
   var shouldRun = false;      // our intent: keep it alive
@@ -827,6 +848,7 @@
   }
 
   function startRecognition() {
+    if (external) return;     // an external ear is in charge
     if (!shouldRun || isUnloading || permissionDenied || running) return;
     if (!recognition) recognition = buildRecognition();
     DIAG.startAttempts++;
@@ -845,6 +867,7 @@
   }
 
   function startWatchdog() {
+    if (external) return;     // external recognisers police themselves
     if (watchdog) return;
     // Belt-and-braces: in a heavily throttled background tab an `onend` can be
     // missed entirely. This poll notices a dead recogniser and revives it.
@@ -868,6 +891,16 @@
     if (global.JARVIS_DISABLED) {
       return 'Voice is off on this page — unlock the site from the landing page first.';
     }
+    // An external engine describes its own condition (downloading, ready, …).
+    if (external) {
+      var st = (external.status && external.status()) || {};
+      if (st.message) return st.message;
+      if (st.error) return 'Offline voice engine problem: ' + st.error;
+      if (!st.ready) return 'Offline voice engine isn’t running yet — tap to enable it.';
+      if (state === 'AWAKENED') return 'Awake — give me a command.';
+      return 'Listening with the offline voice engine. Say “Jarvis”.';
+    }
+    if (externalPending) return 'Starting the offline voice engine…';
     if (permissionDenied) {
       return BROWSER.isBrave
         ? 'Brave is blocking voice recognition. Use Google Chrome.'
@@ -898,6 +931,7 @@
     paint('disabled');
     if (message) notice(message, true);
     try { if (recognition) recognition.abort(); } catch (e) {}
+    try { if (external && external.stop) external.stop(); } catch (e) {}
     running = false;
     if (watchdog) { global.clearInterval(watchdog); watchdog = null; }
   }
@@ -1333,6 +1367,9 @@
     if (watchdog) { global.clearInterval(watchdog); watchdog = null; }
     clearBuffer();
     try { if (recognition) { recognition.onend = null; recognition.abort(); } } catch (e) {}
+    // External recogniser holds the raw microphone stream — releasing it here
+    // is what turns the browser's recording indicator off on tab close.
+    try { if (external && external.stop) external.stop(); } catch (e) {}
     try { if (SYNTH_SUPPORTED) SYNTH.cancel(); } catch (e) {}
     running = false;
   }
@@ -1358,14 +1395,31 @@
       return;
     }
 
-    if (!SUPPORTED) {
-      // EDGE CASE: browser has no SpeechRecognition at all (Firefox, most iOS).
-      // Disable cleanly — the rest of DEB OS keeps working exactly as before.
-      disable('Voice control doesn’t work in this browser' +
-              (BROWSER.isFirefox ? ' — Firefox has no speech recognition' : '') +
-              '. Open the site in Google Chrome to use JARVIS.');
-      console.warn('[JARVIS] SpeechRecognition unsupported; module disabled.');
-      return;
+    /* --- browsers whose built-in ear can't work -------------------------
+     * Firefox has no SpeechRecognition. Brave creates one and then never
+     * returns results. In both cases, don't fire up a recogniser that is
+     * guaranteed to fail — wait a moment for a replacement to register
+     * (jarvis-offline.js loads right after this file), and only fall back to
+     * the "use Chrome" message if none appears.
+     * ------------------------------------------------------------------ */
+    if (!SUPPORTED || BROWSER.isBrave) {
+      if (!external) {
+        externalPending = true;
+        paint('disabled', 'VOICE…');
+        global.setTimeout(function () {
+          if (external || !externalPending) return;   // a backend took over
+          externalPending = false;
+          disable(!SUPPORTED
+            ? ('Voice control doesn’t work in this browser' +
+               (BROWSER.isFirefox ? ' — Firefox has no speech recognition' : '') +
+               '. Open the site in Google Chrome to use JARVIS.')
+            : 'Brave blocks browser speech recognition. Open this site in ' +
+              'Google Chrome, or reload to retry the offline voice engine.');
+        }, 3000);
+        console.warn('[JARVIS] built-in speech recognition unusable here; ' +
+                     'waiting for an external recogniser.');
+        return;
+      }
     }
     if (!SYNTH_SUPPORTED) {
       console.warn('[JARVIS] speechSynthesis unavailable; running without spoken replies.');
@@ -1388,6 +1442,7 @@
 
     // If recognition never even starts, say so rather than sitting there dim.
     global.setTimeout(function () {
+      if (external || externalPending) return;
       if (!shouldRun || state === 'DISABLED' || DIAG.everStarted) return;
       notice('Voice couldn’t start in this browser' +
              (DIAG.lastError ? ' (' + DIAG.lastError + ')' : '') +
@@ -1406,6 +1461,12 @@
                                // it as a file (see jarvis.css)
 
     start: function () {
+      if (external) {
+        shouldRun = true; isUnloading = false;
+        if (state === 'DISABLED' || state === 'IDLE') toPassive();
+        try { external.start(); } catch (e) { log('external start failed', e); }
+        return true;
+      }
       if (!SUPPORTED || permissionDenied) return false;
       shouldRun = true;
       isUnloading = false;
@@ -1415,12 +1476,43 @@
       return true;
     },
 
+    /* ---- pluggable ear -------------------------------------------------- */
+
+    // Hand the listening job to a different recogniser. Used by
+    // jarvis-offline.js in browsers where the Web Speech API is missing or
+    // deliberately inert. Everything after the transcript stays identical.
+    useExternalRecognizer: function (rec) {
+      if (!rec || typeof rec.start !== 'function') return false;
+      external = rec;
+      externalPending = false;
+      // Shut the built-in ear down first so two recognisers never compete.
+      try { if (recognition) { recognition.onend = null; recognition.abort(); } } catch (e) {}
+      running = false;
+      if (watchdog) { global.clearInterval(watchdog); watchdog = null; }
+      permissionDenied = false;
+      log('external recogniser installed:', rec.name || '(unnamed)');
+      if (state === 'DISABLED' || state === 'IDLE') toPassive();
+      return true;
+    },
+
+    // Feed a transcript in from an external recogniser. Goes through exactly
+    // the same guards as the built-in path: nothing is parsed while JARVIS is
+    // speaking, and its own voice is filtered out.
+    ingest: function (text) {
+      if (!text || state === 'DISABLED') return false;
+      if (muted || isEcho(text)) { log('ingest ignored (own voice):', text); return false; }
+      DIAG.everHeard = true;
+      handleTranscript(String(text));
+      return true;
+    },
+
     // Manual stop (e.g. a mute button in the DEB OS UI). Same guarantees as a
     // tab close: no listener is left dangling.
     stop: function () {
       shouldRun = false;
       if (watchdog) { global.clearInterval(watchdog); watchdog = null; }
       try { if (recognition) recognition.abort(); } catch (e) {}
+      try { if (external && external.stop) external.stop(); } catch (e) {}
       running = false;
       toPassive();
       paint('disabled', 'PAUSED');
@@ -1441,6 +1533,8 @@
         version: VERSION, state: state, listening: running,
         supported: SUPPORTED, synth: SYNTH_SUPPORTED,
         browser: BROWSER, diag: DIAG, wake: 'jarvis',
+        engine: external ? (external.name || 'external') : 'web-speech-api',
+        engineStatus: (external && external.status) ? external.status() : null,
         lang: CONFIG.lang, ua: UA
       };
     },
@@ -1455,6 +1549,10 @@
     // Show a small non-blocking message in the corner (never an alert). The
     // DEB OS adapter uses this once per session to tell the user the wake word.
     notify: function (text, persist) { notice(text, persist); return true; },
+
+    // Let an external engine label the indicator (e.g. "DOWNLOADING 40%").
+    // State changes reclaim the label afterwards, which is intended.
+    setLabel: function (text) { if (ui.label) ui.label.textContent = text; return true; },
 
     on: function (fn) { if (typeof fn === 'function') listeners.push(fn); },
     off: function (fn) { listeners = listeners.filter(function (f) { return f !== fn; }); }

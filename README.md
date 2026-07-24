@@ -20,6 +20,7 @@ Hands-free control of the task list, active on every page except the landing scr
 
 - `jarvis.js` — voice engine: wake word, state machine, command grammar, indicator widget
 - `jarvis-debos.js` — data-layer adapter: the only file that knows about `debos.tasks.<date>`
+- `jarvis-offline.js` — replacement ear for browsers that block browser speech (Brave, Firefox)
 
 Say **"Jarvis"** (or "wake up, Jarvis"). JARVIS answers *"Yes, sir"*, the corner
 indicator brightens, and you have 6 seconds to give a command:
@@ -35,18 +36,39 @@ indicator brightens, and you have 6 seconds to give a command:
 Nothing said in the window → JARVIS goes quiet on its own. Something unrecognised
 → one short "didn't catch that" and a red flash.
 
-**How it works:** browser-native Web Speech API only — no backend, no cloud
-speech service, no AI/LLM call, no third-party SDK. Commands are matched by
+**How it works:** no backend and no LLM anywhere. Commands are matched by
 explicit keyword patterns, so the same words always do the same thing. Nothing
-listens after the tab is closed; no audio or transcript is ever stored.
+listens after the tab is closed, and no audio or transcript is stored — the text
+goes straight to the state machine and is discarded. Recognition itself comes
+from the browser in Chrome, or from a local model in Brave/Firefox (below).
 
-**Requirements:** Google Chrome, on a computer. Needs microphone permission and
-an HTTPS/localhost origin, which the GitHub Pages URL satisfies.
+**Requirements:** microphone permission and an HTTPS/localhost origin, which the
+GitHub Pages URL satisfies. Chrome uses its built-in recognition and needs
+nothing else.
 
-Other browsers do not work and say so instead of failing silently: Firefox has
-no speech recognition at all, Brave blocks it by default, and mobile browsers
-stop listening as soon as the tab loses focus. In each case JARVIS switches
-itself off with a plain-language message and the rest of the site is unaffected.
+### Brave and Firefox — the offline engine
+
+Brave deliberately blocks browser speech recognition (Google's speech service is
+licensed to Chrome only, and Brave won't send your audio to it); Firefox never
+implemented it. There is no setting to turn on in either.
+
+So in those browsers JARVIS swaps its ear for `jarvis-offline.js`, which listens
+to the microphone directly and transcribes with a small speech model
+(Whisper tiny, English) running inside the page. Tap the corner dot once to
+switch it on. What that costs, plainly:
+
+- a one-time ~40MB model download per browser, then it works with no internet at all
+- slower: transcription starts when you stop speaking, and takes ~0.3–2s
+- more battery, since the model runs on your own CPU (or GPU where WebGPU exists)
+- a bit less accurate than Chrome on unusual words
+
+Nothing is ever uploaded — the audio never leaves the machine, which is more
+private than Chrome's cloud recognition. Wake word, commands and actions are
+identical either way; only the ear changes. It stays completely dormant in
+Chrome, so Chrome users download nothing.
+
+Mobile browsers stop listening as soon as the tab loses focus. Nothing can be
+done about that from a web page.
 
 **If nothing happens:** click the corner dot — it reports what the voice layer
 is doing, or why it isn't, in one sentence. Add `?jarvisdebug=1` to the URL to
@@ -54,4 +76,10 @@ surface every recognition error in that same corner message, and
 `JARVIS.report()` in the console dumps the full detail.
 
 Test bench: `jarvis-demo.html` drives the whole state machine with buttons, no
-microphone needed. `node jarvis.test.mjs` runs the headless suite.
+microphone needed. Headless suites (163 assertions, no browser required):
+
+```
+node jarvis.test.mjs           # engine: wake word, states, grammar, failure paths
+node jarvis-debos.test.mjs     # integration: what actually lands in localStorage
+node jarvis-offline.test.mjs   # offline engine: VAD segmenter, junk filter, ear swap
+```
