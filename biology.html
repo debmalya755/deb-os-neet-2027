@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<!--
+  DEB OS — BIOLOGY (biology.html)
+  Chapter dashboard for the Biology subject. Split into two units:
+  Botany (green tint) and Zoology (blue tint). 17 + 17 = 34 chapters,
+  each with a custom inline SVG icon that adapts to light/dark theme
+  via currentColor. Weaves with command.html — same shell, same tokens.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="DEB OS Biology — chapter tracker for Class 11 &amp; 12 (Botany + Zoology).">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#060608">
+<title>Biology &mdash; DEB OS</title>
+<script>
+  /* Hydrate theme + enforce session guard + reload-resets-to-landing. Same
+     contract as command.html so refreshing this page also bounces the user
+     back through the black-hole intro. */
+  (function(){ try{
+    var t = localStorage.getItem('debos.theme');
+    if (t !== 'dark' && t !== 'light') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var isReload = false;
+    try{
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') isReload = true;
+    }catch(_){}
+    if (!isReload && performance.navigation && performance.navigation.type === 1) isReload = true;
+    if (isReload) sessionStorage.removeItem('debos.session.unlocked');
+    if (sessionStorage.getItem('debos.session.unlocked') !== '1'){
+      window.location.replace('index.html');
+    }
+  }catch(e){} })();
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23060608'/%3E%3Ccircle cx='32' cy='32' r='24' fill='none' stroke='%234dd0a0' stroke-width='3'/%3E%3Cpath d='M22 40 Q18 30 26 24 Q34 28 32 40 Q28 44 22 40 Z' fill='%234dd0a0'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @view-transition{ navigation: auto; }
+  ::view-transition-old(root),::view-transition-new(root){ animation-duration: .4s; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+
+  /* ---------- Design tokens (mirrored from command.html) ---------- */
+  :root{
+    --font-display:'Chakra Petch',ui-monospace,monospace;
+    --font-body:'Chakra Petch',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --accent-warm:#00f5ff;
+    --accent-gold:#c9943a;
+    --accent-red:#ff3b5c;
+    --accent-green:#4dd0a0;
+    /* Per-unit tokens (dark defaults) */
+    --botany-primary:#7ed957;
+    --botany-rgb:126,217,87;
+    --zoology-primary:#4a9eff;
+    --zoology-rgb:74,158,255;
+  }
+  html[data-theme="dark"]{
+    --bg-deep:#060608;
+    --bg-mid:#0c0c10;
+    --panel:linear-gradient(135deg,#0f0f14 0%,#0c0c10 100%);
+    --panel-border:rgba(0,245,255,.12);
+    --panel-shadow:0 4px 32px rgba(0,0,0,.6);
+    --ink-primary:#e8e8f0;
+    --ink-warm:#d2d2dc;
+    --ink-dim:#8a8a9c;
+    --ink-faint:#4c4c5c;
+    --border:rgba(255,255,255,.06);
+    --border-strong:rgba(0,245,255,.45);
+    --field-bg:rgba(255,255,255,.02);
+    --field-bg-active:rgba(0,245,255,.08);
+    --key-hover:rgba(0,245,255,.10);
+    --divider:rgba(255,255,255,.04);
+    --nav-bg:rgba(6,6,8,.78);
+  }
+  html[data-theme="light"]{
+    --bg-deep:#f0ede6;
+    --bg-mid:#e8e4dc;
+    --panel:linear-gradient(135deg,#faf8f4 0%,#f0ece4 100%);
+    --panel-border:rgba(0,60,140,.14);
+    --panel-shadow:0 2px 20px rgba(0,0,0,.09);
+    --ink-primary:#12121a;
+    --ink-warm:#26262f;
+    --ink-dim:#6b6570;
+    --ink-faint:#a8a49c;
+    --border:rgba(0,0,0,.08);
+    --border-strong:rgba(0,60,140,.4);
+    --field-bg:rgba(0,60,140,.03);
+    --field-bg-active:rgba(0,60,140,.10);
+    --key-hover:rgba(0,60,140,.10);
+    --divider:rgba(0,0,0,.06);
+    --nav-bg:rgba(240,237,230,.85);
+    --accent-warm:#003c8c;
+    --botany-primary:#2d7a2b;
+    --botany-rgb:45,122,43;
+    --zoology-primary:#1e5aa3;
+    --zoology-rgb:30,90,163;
+  }
+
+  /* ---------- Reset ---------- */
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg-deep);color:var(--ink-primary);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(0,245,255,.28);color:var(--ink-primary)}
+
+  /* ---------- Themed scrollbars ---------- */
+  *{scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.55) transparent}
+  html[data-theme="light"] *{scrollbar-color:rgba(0,60,140,.55) transparent}
+  ::-webkit-scrollbar{width:10px;height:10px;background:transparent}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,.015);border-left:1px solid var(--divider)}
+  html[data-theme="light"] ::-webkit-scrollbar-track{background:rgba(0,0,0,.025)}
+  ::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg,rgba(0,245,255,.55),rgba(0,200,212,.35));
+    border-radius:99px;border:2px solid transparent;background-clip:padding-box;
+    box-shadow:inset 0 0 6px rgba(0,245,255,.45);
+  }
+  ::-webkit-scrollbar-thumb:hover{background:var(--accent-warm);background-clip:padding-box;box-shadow:inset 0 0 8px rgba(0,245,255,.65),0 0 14px rgba(0,245,255,.4)}
+  html[data-theme="light"] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(0,60,140,.55),rgba(0,40,110,.35));background-clip:padding-box}
+  ::-webkit-scrollbar-corner{background:transparent}
+
+  /* ---------- Nav ---------- */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+    background:var(--nav-bg);
+    backdrop-filter:saturate(140%) blur(12px);
+    border-bottom:1px solid var(--divider);
+  }
+  .nav-left{display:flex;align-items:center;gap:22px}
+  .logo{font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink-primary);display:flex;align-items:center;gap:11px}
+  .logo .dot{width:8px;height:8px;border-radius:50%;background:var(--accent-warm);box-shadow:0 0 12px var(--accent-warm)}
+  .nav-links{display:flex;gap:2px;font-family:var(--font-body);font-weight:500;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+  .nav-links a{padding:8px 12px;border-radius:8px;color:var(--ink-dim);transition:color .2s,background .2s}
+  .nav-links a:hover{color:var(--ink-primary);background:var(--key-hover)}
+  .nav-links a.active{color:var(--accent-warm);text-shadow:0 0 12px rgba(0,245,255,.4)}
+  .nav-right{display:flex;align-items:center;gap:18px;font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-dim)}
+  .clock{font-size:15px;color:var(--ink-warm);letter-spacing:.06em;font-variant-numeric:tabular-nums;font-weight:500}
+  .theme-btn{width:36px;height:36px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .22s var(--ease)}
+  .theme-btn:hover{border-color:var(--border-strong);color:var(--accent-warm);background:var(--field-bg-active)}
+  .theme-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- Layout ---------- */
+  .workspace{max-width:1400px;margin:0 auto;padding:44px 32px 60px}
+  main{display:flex;flex-direction:column;gap:44px}
+
+  /* ---------- Page hero ---------- */
+  .page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:14px;border-bottom:1px solid var(--divider);flex-wrap:wrap}
+  .hero-left{display:flex;flex-direction:column;gap:8px}
+  .breadcrumb{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .breadcrumb a{color:var(--ink-dim);transition:color .2s var(--ease)}
+  .breadcrumb a:hover{color:var(--accent-warm)}
+  .breadcrumb .sep{opacity:.4}
+  .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(38px,6vw,66px);letter-spacing:-.005em;line-height:1;text-transform:uppercase;color:var(--ink-primary);margin:0}
+  .page-title .accent{color:var(--accent-green);filter:drop-shadow(0 0 22px rgba(77,208,160,.35))}
+  html[data-theme="light"] .page-title .accent{color:#2d7a2b;filter:drop-shadow(0 0 18px rgba(45,122,43,.3))}
+  .hero-right{display:flex;gap:14px;flex-wrap:wrap}
+  .stat-chip{
+    padding:10px 16px;
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;
+    display:flex;flex-direction:column;gap:2px;min-width:120px;
+    box-shadow:var(--panel-shadow);
+    position:relative;overflow:hidden;
+  }
+  .stat-chip::before{content:'';position:absolute;left:14%;right:14%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent-warm),transparent);opacity:.5}
+  .stat-chip .k{font-family:var(--font-mono);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .stat-chip .v{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--ink-primary);letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+  .stat-chip .v .sub{font-size:12px;color:var(--ink-dim);font-weight:400;margin-left:4px}
+
+  /* ---------- Unit section ---------- */
+  .unit{display:flex;flex-direction:column;gap:22px}
+  .unit-botany{--unit-primary:var(--botany-primary);--unit-rgb:var(--botany-rgb)}
+  .unit-zoology{--unit-primary:var(--zoology-primary);--unit-rgb:var(--zoology-rgb)}
+  .unit-head{
+    display:flex;align-items:center;gap:20px;
+    padding:22px 26px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    box-shadow:var(--panel-shadow);
+    position:relative;overflow:hidden;
+    isolation:isolate;
+  }
+  .unit-head::before{
+    content:'';position:absolute;left:0;right:0;top:0;height:1px;
+    background:linear-gradient(90deg,transparent 10%,var(--unit-primary) 50%,transparent 90%);
+    opacity:.7;
+  }
+  .unit-head::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(600px 200px at 50% 100%,rgba(var(--unit-rgb),.08),transparent 70%);
+    pointer-events:none;z-index:-1;
+  }
+  .unit-icon{
+    width:66px;height:66px;flex:none;
+    color:var(--unit-primary);
+    filter:drop-shadow(0 0 16px rgba(var(--unit-rgb),.5));
+    display:flex;align-items:center;justify-content:center;
+    padding:6px;
+    border:1px solid rgba(var(--unit-rgb),.35);
+    border-radius:14px;
+    background:rgba(var(--unit-rgb),.06);
+  }
+  .unit-icon svg{width:100%;height:100%;display:block}
+  .unit-meta{display:flex;flex-direction:column;gap:4px;flex:1}
+  .unit-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--unit-primary);opacity:.9;font-weight:500}
+  .unit-name{font-family:var(--font-display);font-weight:700;font-size:32px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-primary);margin:0;line-height:1}
+  .unit-tag{font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);letter-spacing:.06em;margin-top:2px}
+  .unit-count{
+    font-family:var(--font-display);font-weight:700;font-size:34px;
+    color:var(--unit-primary);letter-spacing:.02em;
+    text-shadow:0 0 14px rgba(var(--unit-rgb),.35);
+    font-variant-numeric:tabular-nums;
+    display:flex;flex-direction:column;align-items:flex-end;line-height:1;
+  }
+  .unit-count .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-top:6px;text-shadow:none}
+
+  /* ---------- Chapter grid ---------- */
+  .chapter-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:14px;
+  }
+  .chapter-card{
+    position:relative;overflow:hidden;
+    display:flex;flex-direction:column;gap:12px;
+    padding:18px 16px 16px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    box-shadow:var(--panel-shadow);
+    color:var(--ink-primary);
+    min-height:160px;
+    transition:transform .28s var(--ease),border-color .28s var(--ease),box-shadow .28s var(--ease);
+    cursor:pointer;
+    isolation:isolate;
+  }
+  .chapter-card::before{
+    content:'';position:absolute;left:14%;right:14%;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--unit-primary),transparent);
+    opacity:.5;transition:opacity .28s var(--ease);
+  }
+  .chapter-card::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(220px 140px at 100% 100%,rgba(var(--unit-rgb),.10),transparent 70%);
+    opacity:0;transition:opacity .28s var(--ease);
+    pointer-events:none;z-index:-1;
+  }
+  .chapter-card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(var(--unit-rgb),.5);
+    box-shadow:var(--panel-shadow),0 0 22px rgba(var(--unit-rgb),.18);
+  }
+  .chapter-card:hover::before{opacity:1}
+  .chapter-card:hover::after{opacity:1}
+  .chapter-card:active{transform:translateY(-1px)}
+  .ch-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .ch-icon{
+    width:44px;height:44px;flex:none;
+    color:var(--unit-primary);
+    filter:drop-shadow(0 0 10px rgba(var(--unit-rgb),.35));
+    transition:transform .3s var(--ease),filter .3s var(--ease);
+  }
+  .ch-icon svg{width:100%;height:100%;display:block}
+  .chapter-card:hover .ch-icon{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(var(--unit-rgb),.55))}
+  .ch-num{
+    font-family:var(--font-mono);font-size:11px;font-weight:500;
+    letter-spacing:.14em;color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;
+    background:var(--field-bg);
+    padding:3px 8px;
+    border-radius:99px;
+    border:1px solid var(--border);
+  }
+  .ch-name{
+    font-family:var(--font-body);font-weight:600;font-size:13.5px;
+    color:var(--ink-primary);letter-spacing:.01em;
+    line-height:1.28;
+    margin-top:auto;
+  }
+  .ch-open{
+    font-family:var(--font-mono);font-size:8.5px;
+    color:var(--unit-primary);letter-spacing:.3em;text-transform:uppercase;
+    font-weight:500;
+    display:inline-flex;align-items:center;gap:5px;
+    opacity:.75;
+    transition:gap .22s var(--ease),opacity .22s var(--ease);
+  }
+  .chapter-card:hover .ch-open{gap:8px;opacity:1}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:960px){
+    .workspace{padding:32px 20px 44px}
+    .unit-head{flex-wrap:wrap}
+    .chapter-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .chapter-card{min-height:140px;padding:14px 12px}
+    .ch-icon{width:38px;height:38px}
+    .ch-name{font-size:12.5px}
+  }
+  @media (max-width:640px){
+    .nav{padding:12px 16px;flex-wrap:wrap;gap:10px}
+    .nav-right{gap:12px}
+    .chapter-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .chapter-card{min-height:130px}
+    .page-title{font-size:36px}
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    max-width:1400px;margin:60px auto 0;padding:24px 32px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--divider);
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;
+  }
+  footer a{color:var(--ink-dim);transition:color .2s var(--ease)}
+  footer a:hover{color:var(--accent-warm)}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .chapter-card{animation:fadeUp .35s var(--ease) backwards}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a class="logo" href="command.html"><span class="dot"></span> DEB OS</a>
+    <div class="nav-links">
+      <a href="command.html">Command</a>
+      <a href="physics.html">Physics</a>
+      <a href="chemistry.html">Chemistry</a>
+      <a href="biology.html" class="active">Biology</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="clock" id="clock">--:--</span>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="workspace">
+<main>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <div class="hero-left">
+      <div class="breadcrumb">
+        <a href="command.html">&larr; Command</a>
+        <span class="sep">/</span>
+        <span>Subjects</span>
+        <span class="sep">/</span>
+        <span>Biology</span>
+      </div>
+      <h1 class="page-title"><span class="accent">Bio</span>logy</h1>
+      <div class="unit-tag" id="chaptersMeta">34 chapters &middot; 17 Botany + 17 Zoology</div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-chip">
+        <span class="k">Completed</span>
+        <span class="v" id="doneN">0<span class="sub">/34</span></span>
+      </div>
+      <div class="stat-chip">
+        <span class="k">In progress</span>
+        <span class="v" id="progN">0</span>
+      </div>
+      <div class="stat-chip">
+        <span class="k">Untouched</span>
+        <span class="v" id="untN">34</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- BOTANY -->
+  <section class="unit unit-botany">
+    <div class="unit-head">
+      <div class="unit-icon">
+        <!-- Botany: two leaves inside a circle (matches the reference image) -->
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M42 26 C 34 34, 30 46, 34 62 C 42 58, 46 46, 44 30 Z" fill="currentColor" opacity=".85"/>
+          <path d="M56 20 C 66 30, 68 46, 62 66 C 52 62, 50 46, 54 24 Z" fill="currentColor"/>
+          <path d="M42 62 Q 46 74 58 74" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="unit-meta">
+        <div class="unit-eyebrow">Unit I</div>
+        <h2 class="unit-name">Botany</h2>
+        <div class="unit-tag">Plant life &middot; genetics &middot; ecology</div>
+      </div>
+      <div class="unit-count">17<span class="lbl">Chapters</span></div>
+    </div>
+    <div class="chapter-grid" id="botanyGrid"></div>
+  </section>
+
+  <!-- ZOOLOGY -->
+  <section class="unit unit-zoology">
+    <div class="unit-head">
+      <div class="unit-icon">
+        <!-- Zoology: lion + bird + fish silhouettes (matches reference) -->
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <!-- Lion head (left, stylized) -->
+          <path d="M22 42 Q 20 30 32 26 Q 36 22 42 28 Q 50 30 48 42 Q 52 48 46 54 Q 40 58 34 54 Q 24 52 22 42 Z" fill="currentColor"/>
+          <circle cx="34" cy="40" r="1.5" fill="var(--panel-bg,#0c0c10)" opacity=".6"/>
+          <!-- Bird (upper right) -->
+          <path d="M62 22 Q 68 18 74 22 Q 78 20 82 24 Q 74 28 66 26 Z" fill="currentColor"/>
+          <!-- Fish (lower right) -->
+          <path d="M58 64 Q 66 58 76 62 Q 82 66 76 72 Q 68 76 58 72 Q 54 72 52 68 L 58 66 Z" fill="currentColor"/>
+          <path d="M76 62 L 82 58 L 82 72 L 76 68 Z" fill="currentColor"/>
+          <circle cx="72" cy="66" r="1.2" fill="var(--panel-bg,#0c0c10)" opacity=".7"/>
+        </svg>
+      </div>
+      <div class="unit-meta">
+        <div class="unit-eyebrow">Unit II</div>
+        <h2 class="unit-name">Zoology</h2>
+        <div class="unit-tag">Animal systems &middot; physiology &middot; biotech</div>
+      </div>
+      <div class="unit-count">17<span class="lbl">Chapters</span></div>
+    </div>
+    <div class="chapter-grid" id="zoologyGrid"></div>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  <span>DEB OS &middot; Biology &middot; v0.1</span>
+  <span><a href="command.html">&larr; Return to command</a></span>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------- Storage helper ----------
+  var LS = {
+    get: function(k, d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(e){ return d; } },
+    set: function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+
+  // ---------- Theme toggle ----------
+  var themeBtn = document.getElementById('themeBtn');
+  var themeIcon = document.getElementById('themeIcon');
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    LS.set('debos.theme', t);
+    if (t === 'dark'){
+      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    } else {
+      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+    }
+  }
+  applyTheme(LS.get('debos.theme','dark'));
+  themeBtn.addEventListener('click', function(){
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- Clock ----------
+  var clockEl = document.getElementById('clock');
+  function tick(){
+    var d = new Date();
+    var h = String(d.getHours()).padStart(2,'0');
+    var m = String(d.getMinutes()).padStart(2,'0');
+    clockEl.textContent = h + ':' + m;
+  }
+  tick(); setInterval(tick, 15000);
+
+  // ---------- Chapter icons — inline SVG paths, single viewBox 100x100 ----------
+  // Each returns the inner markup only; wrapper adds the <svg> and currentColor.
+  var ICON = {
+    // ============ BOTANY ============
+    'living-world': '<circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2.6"/>'+
+      '<path d="M10 44 Q30 40 50 44 T90 42" fill="none" stroke="currentColor" stroke-width="2"/>'+
+      '<path d="M10 62 Q30 66 50 60 T90 62" fill="none" stroke="currentColor" stroke-width="2"/>'+
+      '<ellipse cx="50" cy="50" rx="18" ry="40" fill="none" stroke="currentColor" stroke-width="2"/>',
+    'bio-classification': '<circle cx="50" cy="18" r="5" fill="currentColor"/>'+
+      '<line x1="50" y1="23" x2="26" y2="45" stroke="currentColor" stroke-width="2.2"/>'+
+      '<line x1="50" y1="23" x2="74" y2="45" stroke="currentColor" stroke-width="2.2"/>'+
+      '<circle cx="26" cy="48" r="5" fill="currentColor"/><circle cx="74" cy="48" r="5" fill="currentColor"/>'+
+      '<line x1="26" y1="53" x2="14" y2="80" stroke="currentColor" stroke-width="2"/>'+
+      '<line x1="26" y1="53" x2="38" y2="80" stroke="currentColor" stroke-width="2"/>'+
+      '<line x1="74" y1="53" x2="62" y2="80" stroke="currentColor" stroke-width="2"/>'+
+      '<line x1="74" y1="53" x2="86" y2="80" stroke="currentColor" stroke-width="2"/>'+
+      '<circle cx="14" cy="84" r="4" fill="currentColor"/><circle cx="38" cy="84" r="4" fill="currentColor"/>'+
+      '<circle cx="62" cy="84" r="4" fill="currentColor"/><circle cx="86" cy="84" r="4" fill="currentColor"/>',
+    'plant-kingdom': '<path d="M50 16 C 42 24, 40 40, 46 56 C 54 50, 56 34, 52 18 Z" fill="currentColor"/>'+
+      '<path d="M28 42 C 22 52, 22 68, 32 78 C 42 72, 42 56, 34 44 Z" fill="currentColor" opacity=".75"/>'+
+      '<path d="M72 42 C 78 52, 78 68, 68 78 C 58 72, 58 56, 66 44 Z" fill="currentColor" opacity=".75"/>'+
+      '<line x1="50" y1="56" x2="50" y2="88" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    'morphology': '<g fill="currentColor">'+
+      '<ellipse cx="50" cy="26" rx="12" ry="16"/>'+
+      '<ellipse cx="26" cy="42" rx="16" ry="12" transform="rotate(-30 26 42)"/>'+
+      '<ellipse cx="74" cy="42" rx="16" ry="12" transform="rotate(30 74 42)"/>'+
+      '<ellipse cx="34" cy="70" rx="12" ry="16" transform="rotate(-30 34 70)"/>'+
+      '<ellipse cx="66" cy="70" rx="12" ry="16" transform="rotate(30 66 70)"/>'+
+      '<circle cx="50" cy="50" r="8"/></g>',
+    'anatomy': '<g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">'+
+      '<path d="M50 14 v46"/>'+
+      '<path d="M50 30 Q 38 30 34 22"/>'+
+      '<path d="M50 42 Q 62 42 66 34"/>'+
+      '<path d="M50 60 L 40 74 M50 60 L 60 74 M50 60 L 32 82 M50 60 L 68 82 M50 60 L 50 88"/>'+
+      '</g>',
+    'cell': '<circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" stroke-width="2.4"/>'+
+      '<circle cx="50" cy="50" r="10" fill="currentColor"/>'+
+      '<circle cx="32" cy="40" r="4" fill="currentColor" opacity=".8"/>'+
+      '<circle cx="68" cy="38" r="3" fill="currentColor" opacity=".8"/>'+
+      '<circle cx="66" cy="64" r="5" fill="currentColor" opacity=".8"/>'+
+      '<circle cx="30" cy="62" r="3.5" fill="currentColor" opacity=".8"/>',
+    'cell-cycle': '<circle cx="50" cy="50" r="14" fill="none" stroke="currentColor" stroke-width="2.2"/>'+
+      '<path d="M50 12 A38 38 0 0 1 82 50" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<path d="M82 50 A38 38 0 0 1 50 88" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>'+
+      '<polygon points="76,44 88,50 76,56" fill="currentColor"/>'+
+      '<polygon points="54,88 44,80 44,92" fill="currentColor" opacity=".55" transform="rotate(90 50 84)"/>',
+    'photosynthesis': '<circle cx="70" cy="26" r="10" fill="currentColor"/>'+
+      '<g stroke="currentColor" stroke-width="2" stroke-linecap="round">'+
+      '<line x1="70" y1="10" x2="70" y2="16"/><line x1="86" y1="26" x2="80" y2="26"/>'+
+      '<line x1="82" y1="14" x2="78" y2="18"/><line x1="82" y1="38" x2="78" y2="34"/></g>'+
+      '<path d="M50 46 C 26 46, 20 68, 30 82 C 46 82, 58 68, 58 46 Z" fill="currentColor"/>'+
+      '<line x1="30" y1="82" x2="58" y2="46" stroke="var(--bg-deep,#060608)" stroke-width="1.6"/>',
+    'respiration-plants': '<ellipse cx="50" cy="50" rx="34" ry="24" fill="currentColor" opacity=".18"/>'+
+      '<ellipse cx="50" cy="50" rx="34" ry="24" fill="none" stroke="currentColor" stroke-width="2.4"/>'+
+      '<g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">'+
+      '<path d="M20 42 Q 30 38 40 44 Q 50 50 60 44 Q 70 38 80 42"/>'+
+      '<path d="M20 50 Q 30 46 40 52 Q 50 58 60 52 Q 70 46 80 50"/>'+
+      '<path d="M20 58 Q 30 54 40 60 Q 50 66 60 60 Q 70 54 80 58"/></g>',
+    'plant-growth': '<path d="M12 84 Q 50 76 88 84" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M50 82 L 50 44" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<path d="M50 60 Q 36 54 30 42 Q 44 42 50 54 Z" fill="currentColor"/>'+
+      '<path d="M50 50 Q 64 44 70 32 Q 56 32 50 44 Z" fill="currentColor"/>'+
+      '<circle cx="70" cy="26" r="6" fill="currentColor" opacity=".8"/>',
+    'sex-repro-plants': '<ellipse cx="50" cy="60" rx="18" ry="14" fill="currentColor" opacity=".6"/>'+
+      '<g stroke="currentColor" stroke-width="2.4" fill="currentColor" stroke-linecap="round">'+
+      '<line x1="50" y1="60" x2="34" y2="30"/><circle cx="32" cy="26" r="4"/>'+
+      '<line x1="50" y1="60" x2="42" y2="24"/><circle cx="40" cy="20" r="4"/>'+
+      '<line x1="50" y1="60" x2="50" y2="20"/><circle cx="50" cy="16" r="5"/>'+
+      '<line x1="50" y1="60" x2="58" y2="24"/><circle cx="60" cy="20" r="4"/>'+
+      '<line x1="50" y1="60" x2="66" y2="30"/><circle cx="68" cy="26" r="4"/>'+
+      '</g>'+
+      '<line x1="50" y1="74" x2="50" y2="90" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    'inheritance': '<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">'+
+      '<path d="M32 12 Q 60 32 32 52 Q 4 72 32 92"/>'+
+      '<path d="M68 12 Q 40 32 68 52 Q 96 72 68 92"/>'+
+      '<line x1="34" y1="20" x2="66" y2="20" stroke-width="2"/>'+
+      '<line x1="30" y1="30" x2="70" y2="30" stroke-width="2"/>'+
+      '<line x1="34" y1="42" x2="66" y2="42" stroke-width="2"/>'+
+      '<line x1="30" y1="52" x2="70" y2="52" stroke-width="2"/>'+
+      '<line x1="34" y1="64" x2="66" y2="64" stroke-width="2"/>'+
+      '<line x1="30" y1="74" x2="70" y2="74" stroke-width="2"/>'+
+      '<line x1="34" y1="84" x2="66" y2="84" stroke-width="2"/></g>',
+    'molecular-basis': '<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">'+
+      '<path d="M28 14 Q 52 30 28 46 Q 4 62 28 78 Q 52 94 28 100"/>'+
+      '<path d="M72 14 Q 48 30 72 46 Q 96 62 72 78 Q 48 94 72 100"/></g>'+
+      '<g fill="currentColor">'+
+      '<circle cx="31" cy="22" r="3"/><circle cx="69" cy="22" r="3"/>'+
+      '<circle cx="30" cy="34" r="3"/><circle cx="70" cy="34" r="3"/>'+
+      '<circle cx="31" cy="46" r="3"/><circle cx="69" cy="46" r="3"/>'+
+      '<circle cx="30" cy="58" r="3"/><circle cx="70" cy="58" r="3"/>'+
+      '<circle cx="31" cy="70" r="3"/><circle cx="69" cy="70" r="3"/>'+
+      '<circle cx="30" cy="82" r="3"/><circle cx="70" cy="82" r="3"/></g>',
+    'microbes-welfare': '<path d="M50 12 L 82 24 V 46 Q 82 74 50 88 Q 18 74 18 46 V 24 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<g fill="currentColor">'+
+      '<ellipse cx="38" cy="42" rx="6" ry="4" transform="rotate(-20 38 42)"/>'+
+      '<ellipse cx="62" cy="42" rx="6" ry="4" transform="rotate(20 62 42)"/>'+
+      '<ellipse cx="50" cy="58" rx="7" ry="4"/>'+
+      '<circle cx="36" cy="58" r="2.5"/><circle cx="64" cy="58" r="2.5"/>'+
+      '<circle cx="46" cy="70" r="2"/><circle cx="54" cy="70" r="2"/></g>',
+    'organisms-populations': '<g fill="currentColor">'+
+      '<path d="M18 76 L 24 60 L 30 76 Z"/>'+
+      '<path d="M12 82 L 22 44 L 32 82 Z" opacity=".55"/>'+
+      '<path d="M76 84 L 88 46 L 100 84 Z" transform="translate(-6 -4)"/>'+
+      '<path d="M62 88 L 74 40 L 86 88 Z" transform="translate(-4 -4)" opacity=".55"/>'+
+      '</g>'+
+      '<g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">'+
+      '<path d="M46 66 L 46 82 M56 66 L 56 82 M46 66 L 42 60 M56 66 L 60 60"/>'+
+      '<path d="M42 60 L 40 54 M60 60 L 62 54 M42 60 L 38 54 M60 60 L 64 54"/>'+
+      '<circle cx="50" cy="58" r="6" fill="currentColor"/></g>',
+    'ecosystem': '<circle cx="70" cy="22" r="8" fill="currentColor"/>'+
+      '<g stroke="currentColor" stroke-width="1.8" stroke-linecap="round">'+
+      '<line x1="70" y1="8" x2="70" y2="14"/><line x1="82" y1="22" x2="88" y2="22"/>'+
+      '<line x1="80" y1="12" x2="76" y2="16"/><line x1="80" y1="32" x2="76" y2="28"/></g>'+
+      '<path d="M14 82 Q 26 60 38 82 Z" fill="currentColor"/>'+
+      '<path d="M30 82 Q 46 46 62 82 Z" fill="currentColor"/>'+
+      '<path d="M56 82 Q 68 62 80 82 Z" fill="currentColor" opacity=".7"/>'+
+      '<line x1="8" y1="86" x2="92" y2="86" stroke="currentColor" stroke-width="2.2"/>',
+    'biodiversity': '<g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'+
+      '<path d="M18 74 Q 22 60 34 62 L 34 82 Z" fill="currentColor"/>'+
+      '<path d="M82 74 Q 78 60 66 62 L 66 82 Z" fill="currentColor"/>'+
+      '<line x1="34" y1="82" x2="66" y2="82"/></g>'+
+      '<path d="M50 26 C 42 34, 40 46, 44 56 C 54 52, 56 42, 52 28 Z" fill="currentColor"/>'+
+      '<path d="M50 30 L 50 66" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+
+    // ============ ZOOLOGY ============
+    'animal-kingdom': '<circle cx="50" cy="60" r="16" fill="currentColor"/>'+
+      '<circle cx="28" cy="42" r="9" fill="currentColor"/>'+
+      '<circle cx="46" cy="26" r="9" fill="currentColor"/>'+
+      '<circle cx="66" cy="26" r="9" fill="currentColor"/>'+
+      '<circle cx="76" cy="46" r="9" fill="currentColor"/>',
+    'animal-tissues': '<g stroke="currentColor" stroke-width="2" fill="none">'+
+      '<polygon points="30,20 50,10 70,20 70,40 50,50 30,40"/>'+
+      '<polygon points="10,50 30,40 50,50 50,70 30,80 10,70"/>'+
+      '<polygon points="50,50 70,40 90,50 90,70 70,80 50,70"/>'+
+      '<polygon points="30,80 50,70 70,80 70,100 50,110 30,100" transform="translate(0 -20)"/>'+
+      '</g>'+
+      '<g fill="currentColor">'+
+      '<circle cx="50" cy="30" r="2.5"/><circle cx="30" cy="60" r="2.5"/>'+
+      '<circle cx="70" cy="60" r="2.5"/><circle cx="50" cy="70" r="2.5"/></g>',
+    'frog': '<g fill="currentColor">'+
+      '<ellipse cx="50" cy="58" rx="30" ry="22"/>'+
+      '<circle cx="36" cy="40" r="9"/><circle cx="64" cy="40" r="9"/>'+
+      '<circle cx="36" cy="40" r="4" fill="var(--bg-deep,#060608)"/>'+
+      '<circle cx="64" cy="40" r="4" fill="var(--bg-deep,#060608)"/>'+
+      '<circle cx="36" cy="40" r="2" fill="currentColor"/><circle cx="64" cy="40" r="2" fill="currentColor"/>'+
+      '<ellipse cx="18" cy="70" rx="10" ry="6" transform="rotate(-20 18 70)"/>'+
+      '<ellipse cx="82" cy="70" rx="10" ry="6" transform="rotate(20 82 70)"/>'+
+      '<path d="M40 68 Q 50 74 60 68" fill="none" stroke="var(--bg-deep,#060608)" stroke-width="1.6" stroke-linecap="round"/></g>',
+    'cockroach': '<g fill="currentColor">'+
+      '<ellipse cx="50" cy="52" rx="22" ry="30"/>'+
+      '<ellipse cx="50" cy="34" rx="12" ry="10"/>'+
+      '<line x1="42" y1="26" x2="30" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'+
+      '<line x1="58" y1="26" x2="70" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'+
+      '<g stroke="currentColor" stroke-width="2.2" stroke-linecap="round">'+
+      '<line x1="28" y1="46" x2="14" y2="42"/><line x1="72" y1="46" x2="86" y2="42"/>'+
+      '<line x1="28" y1="58" x2="12" y2="60"/><line x1="72" y1="58" x2="88" y2="60"/>'+
+      '<line x1="30" y1="70" x2="16" y2="80"/><line x1="70" y1="70" x2="84" y2="80"/>'+
+      '</g></g>',
+    'biomolecules': '<g fill="currentColor">'+
+      '<circle cx="30" cy="30" r="7"/><circle cx="50" cy="20" r="6"/>'+
+      '<circle cx="72" cy="34" r="7"/><circle cx="70" cy="60" r="7"/>'+
+      '<circle cx="50" cy="72" r="6"/><circle cx="28" cy="60" r="7"/>'+
+      '<circle cx="50" cy="46" r="5"/></g>'+
+      '<g stroke="currentColor" stroke-width="2" fill="none">'+
+      '<line x1="30" y1="30" x2="50" y2="46"/><line x1="50" y1="20" x2="50" y2="46"/>'+
+      '<line x1="72" y1="34" x2="50" y2="46"/><line x1="70" y1="60" x2="50" y2="46"/>'+
+      '<line x1="50" y1="72" x2="50" y2="46"/><line x1="28" y1="60" x2="50" y2="46"/></g>',
+    'breathing': '<path d="M50 20 v52" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>'+
+      '<path d="M50 24 Q 44 22 40 26 Q 32 32 28 46 Q 24 62 28 78 Q 34 86 44 82 Q 48 78 48 68 V 30 Z" fill="currentColor"/>'+
+      '<path d="M50 24 Q 56 22 60 26 Q 68 32 72 46 Q 76 62 72 78 Q 66 86 56 82 Q 52 78 52 68 V 30 Z" fill="currentColor"/>'+
+      '<path d="M42 18 h16 v6 h-16 z" fill="currentColor"/>',
+    'body-fluids': '<path d="M50 84 C 20 60, 10 42, 26 26 C 38 18, 50 26, 50 34 C 50 26, 62 18, 74 26 C 90 42, 80 60, 50 84 Z" fill="currentColor"/>'+
+      '<path d="M40 46 L 46 60 L 54 34 L 62 54" fill="none" stroke="var(--bg-deep,#060608)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>',
+    'excretory': '<g fill="currentColor">'+
+      '<path d="M30 22 Q 18 22 14 40 Q 12 60 22 74 Q 32 82 40 74 Q 46 60 44 40 Q 42 22 30 22 Z"/>'+
+      '<path d="M70 22 Q 82 22 86 40 Q 88 60 78 74 Q 68 82 60 74 Q 54 60 56 40 Q 58 22 70 22 Z"/></g>'+
+      '<g stroke="var(--bg-deep,#060608)" stroke-width="2" fill="none" stroke-linecap="round">'+
+      '<path d="M32 44 Q 34 52 34 60"/><path d="M68 44 Q 66 52 66 60"/></g>'+
+      '<path d="M50 78 L 50 92" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+    'locomotion': '<g fill="currentColor">'+
+      '<circle cx="56" cy="18" r="7"/>'+
+      '<path d="M52 28 L 40 44 L 30 40 L 32 34 L 42 38 L 50 26 Z"/>'+
+      '<path d="M52 28 L 62 46 L 74 44 L 76 50 L 62 54 L 50 36 Z"/>'+
+      '<path d="M62 46 L 60 66 L 76 82 L 72 88 L 54 74 L 54 50 Z"/>'+
+      '<path d="M48 40 L 32 60 L 22 58 L 22 64 L 34 68 L 52 48 Z"/></g>',
+    'neural': '<g fill="currentColor">'+
+      '<circle cx="50" cy="50" r="12"/></g>'+
+      '<g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round">'+
+      '<path d="M50 38 Q 42 22 30 16"/>'+
+      '<path d="M50 38 Q 58 22 70 16"/>'+
+      '<path d="M38 46 Q 22 42 12 32"/>'+
+      '<path d="M62 46 Q 78 42 88 32"/>'+
+      '<path d="M38 54 Q 22 58 12 68"/>'+
+      '<path d="M62 54 Q 78 58 88 68"/>'+
+      '<path d="M50 62 L 50 88"/>'+
+      '<path d="M50 82 L 42 90"/><path d="M50 82 L 58 90"/></g>',
+    'chemical-coord': '<polygon points="50,14 82,36 70,72 30,72 18,36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<g fill="currentColor">'+
+      '<circle cx="50" cy="14" r="5"/><circle cx="82" cy="36" r="5"/>'+
+      '<circle cx="70" cy="72" r="5"/><circle cx="30" cy="72" r="5"/>'+
+      '<circle cx="18" cy="36" r="5"/></g>',
+    'human-repro': '<path d="M56 24 Q 50 18 44 22 Q 36 26 34 36 Q 32 46 40 52 Q 42 58 40 66 Q 40 76 48 80 Q 60 82 66 76 Q 70 68 66 60 Q 62 54 66 48 Q 72 40 68 30 Q 64 22 56 24 Z" fill="currentColor"/>'+
+      '<circle cx="52" cy="34" r="2" fill="var(--bg-deep,#060608)"/>',
+    'reproductive-health': '<path d="M50 12 L 78 22 V 46 Q 78 68 50 84 Q 22 68 22 46 V 22 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<g stroke="currentColor" stroke-width="4" stroke-linecap="round">'+
+      '<line x1="50" y1="30" x2="50" y2="60"/><line x1="36" y1="45" x2="64" y2="45"/></g>',
+    'evolution': '<g stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round">'+
+      '<line x1="50" y1="86" x2="50" y2="52"/>'+
+      '<path d="M50 52 L 34 34 M50 52 L 66 34"/>'+
+      '<path d="M34 34 L 22 20 M34 34 L 40 18"/>'+
+      '<path d="M66 34 L 60 18 M66 34 L 78 20"/></g>'+
+      '<g fill="currentColor">'+
+      '<circle cx="22" cy="18" r="3.5"/><circle cx="40" cy="16" r="3.5"/>'+
+      '<circle cx="60" cy="16" r="3.5"/><circle cx="78" cy="18" r="3.5"/>'+
+      '<circle cx="50" cy="50" r="3.5"/></g>',
+    'health-diseases': '<path d="M50 12 L 78 22 V 44 Q 78 68 50 86 Q 22 68 22 44 V 22 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<g fill="currentColor">'+
+      '<circle cx="42" cy="40" r="6"/><circle cx="42" cy="40" r="2" fill="var(--bg-deep,#060608)"/>'+
+      '<circle cx="58" cy="52" r="7"/><circle cx="58" cy="52" r="2" fill="var(--bg-deep,#060608)"/>'+
+      '<circle cx="42" cy="62" r="5"/></g>'+
+      '<g stroke="currentColor" stroke-width="1.4">'+
+      '<line x1="34" y1="40" x2="38" y2="40"/><line x1="46" y1="40" x2="50" y2="40"/>'+
+      '<line x1="42" y1="32" x2="42" y2="34"/><line x1="42" y1="46" x2="42" y2="48"/>'+
+      '<line x1="49" y1="52" x2="52" y2="52"/><line x1="64" y1="52" x2="67" y2="52"/></g>',
+    'biotech-principles': '<circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" stroke-width="2.4"/>'+
+      '<g fill="currentColor">'+
+      '<rect x="46" y="12" width="8" height="12"/><rect x="46" y="76" width="8" height="12"/>'+
+      '<rect x="12" y="46" width="12" height="8"/><rect x="76" y="46" width="12" height="8"/>'+
+      '<rect x="20" y="20" width="10" height="8" transform="rotate(45 25 24)"/>'+
+      '<rect x="70" y="20" width="10" height="8" transform="rotate(-45 75 24)"/>'+
+      '<rect x="20" y="72" width="10" height="8" transform="rotate(-45 25 76)"/>'+
+      '<rect x="70" y="72" width="10" height="8" transform="rotate(45 75 76)"/></g>'+
+      '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+
+      '<path d="M40 38 Q 50 48 40 58 Q 30 68 40 78"/>'+
+      '<path d="M60 38 Q 50 48 60 58 Q 70 68 60 78"/></g>',
+    'biotech-applications': '<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
+      '<line x1="34" y1="14" x2="66" y2="14" stroke-width="3.4"/>'+
+      '<path d="M38 16 v18 L 24 76 a4 4 0 0 0 3.8 6 h44.4 a4 4 0 0 0 3.8 -6 L 62 34 V 16"/></g>'+
+      '<path d="M28 66 Q 38 62 50 66 Q 62 70 72 66 L 74 78 a2 2 0 0 1 -2 2 h-44 a2 2 0 0 1 -2 -2 z" fill="currentColor"/>'+
+      '<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'+
+      '<path d="M42 40 Q 50 48 42 56"/><path d="M58 40 Q 50 48 58 56"/></g>'
+  };
+
+  // ---------- Chapter data ----------
+  var BOTANY = [
+    { n: 1,  name: 'The Living World',                          icon: 'living-world' },
+    { n: 2,  name: 'Biological Classification',                 icon: 'bio-classification' },
+    { n: 3,  name: 'Plant Kingdom',                             icon: 'plant-kingdom' },
+    { n: 4,  name: 'Morphology of Flowering Plants',            icon: 'morphology' },
+    { n: 5,  name: 'Anatomy of Flowering Plants',               icon: 'anatomy' },
+    { n: 6,  name: 'Cell: The Unit of Life',                    icon: 'cell' },
+    { n: 7,  name: 'Cell Cycle and Cell Division',              icon: 'cell-cycle' },
+    { n: 8,  name: 'Photosynthesis in Higher Plants',           icon: 'photosynthesis' },
+    { n: 9,  name: 'Respiration in Plants',                     icon: 'respiration-plants' },
+    { n: 10, name: 'Plant Growth and Development',              icon: 'plant-growth' },
+    { n: 11, name: 'Sexual Reproduction in Flowering Plants',   icon: 'sex-repro-plants' },
+    { n: 12, name: 'Principles of Inheritance and Variation',   icon: 'inheritance' },
+    { n: 13, name: 'Molecular Basis of Inheritance',            icon: 'molecular-basis' },
+    { n: 14, name: 'Microbes in Human Welfare',                 icon: 'microbes-welfare' },
+    { n: 15, name: 'Organisms and Populations',                 icon: 'organisms-populations' },
+    { n: 16, name: 'Ecosystem',                                 icon: 'ecosystem' },
+    { n: 17, name: 'Biodiversity and Conservation',             icon: 'biodiversity' }
+  ];
+  var ZOOLOGY = [
+    { n: 1,  name: 'Animal Kingdom',                            icon: 'animal-kingdom' },
+    { n: 2,  name: 'Animal Tissues',                            icon: 'animal-tissues' },
+    { n: 3,  name: 'Frog',                                      icon: 'frog' },
+    { n: 4,  name: 'Cockroach',                                 icon: 'cockroach' },
+    { n: 5,  name: 'Biomolecules',                              icon: 'biomolecules' },
+    { n: 6,  name: 'Breathing and Exchange of Gases',           icon: 'breathing' },
+    { n: 7,  name: 'Body Fluids and Circulation',               icon: 'body-fluids' },
+    { n: 8,  name: 'Excretory Products and their Elimination',  icon: 'excretory' },
+    { n: 9,  name: 'Locomotion and Movement',                   icon: 'locomotion' },
+    { n: 10, name: 'Neural Control and Coordination',           icon: 'neural' },
+    { n: 11, name: 'Chemical Coordination and Integration',     icon: 'chemical-coord' },
+    { n: 12, name: 'Human Reproduction',                        icon: 'human-repro' },
+    { n: 13, name: 'Reproductive Health',                       icon: 'reproductive-health' },
+    { n: 14, name: 'Evolution',                                 icon: 'evolution' },
+    { n: 15, name: 'Human Health and Diseases',                 icon: 'health-diseases' },
+    { n: 16, name: 'Biotechnology: Principles and Processes',   icon: 'biotech-principles' },
+    { n: 17, name: 'Biotechnology and Its Applications',        icon: 'biotech-applications' }
+  ];
+
+  // ---------- Render ----------
+  function slug(s){
+    return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  }
+  function makeCard(unitKey, ch, idx){
+    var iconMarkup = ICON[ch.icon] || '<circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>';
+    var num = String(ch.n).padStart(2,'0');
+    var s = slug(ch.name);
+    var a = document.createElement('a');
+    a.className = 'chapter-card';
+    a.href = 'biology/' + unitKey + '/' + s + '.html';
+    a.setAttribute('aria-label', 'Open chapter '+ch.n+': '+ch.name);
+    a.style.animationDelay = (idx * 30) + 'ms';
+    a.innerHTML =
+      '<div class="ch-top">'+
+        '<div class="ch-icon"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'+iconMarkup+'</svg></div>'+
+        '<span class="ch-num">'+num+'</span>'+
+      '</div>'+
+      '<div class="ch-name">'+ch.name+'</div>'+
+      '<div class="ch-open">Open <span aria-hidden="true">&rarr;</span></div>';
+    // Placeholder click behaviour: prevent 404s until chapter pages exist
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      // Future: navigate to the actual chapter page
+      // window.location.href = a.href;
+    });
+    return a;
+  }
+  function render(){
+    var bg = document.getElementById('botanyGrid');
+    var zg = document.getElementById('zoologyGrid');
+    BOTANY.forEach(function(ch, i){ bg.appendChild(makeCard('botany', ch, i)); });
+    ZOOLOGY.forEach(function(ch, i){ zg.appendChild(makeCard('zoology', ch, i)); });
+  }
+  render();
+
+  // ---------- Stats (placeholder — reads from localStorage.debos.biology.progress) ----------
+  var progress = (function(){ try{ return JSON.parse(localStorage.getItem('debos.biology.progress')||'{}'); }catch(e){ return {}; } })();
+  var done = 0, prog = 0;
+  Object.keys(progress).forEach(function(k){
+    if (progress[k] === 'done') done++;
+    else if (progress[k] === 'in-progress') prog++;
+  });
+  document.getElementById('doneN').innerHTML = done + '<span class="sub">/34</span>';
+  document.getElementById('progN').textContent = prog;
+  document.getElementById('untN').textContent = (34 - done - prog);
+
+  // ---------- bfcache: re-check auth on back/forward restore ----------
+  window.addEventListener('pageshow', function(e){
+    if (e.persisted && sessionStorage.getItem('debos.session.unlocked') !== '1'){
+      window.location.replace('index.html');
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
