@@ -572,6 +572,45 @@
     return 'dpps'; /* unknown unit types land in DPPs rather than vanishing */
   }
 
+  /* ---------------- One-time reconciliation ----------------
+     Earlier builds put chapters into play implicitly — planning or completing a
+     task was enough. Those chapters were never explicitly started, so their
+     state is not the Captain's. Clear every chapter's run-state once, returning
+     the whole syllabus to Stopped; from here only a Start Chapter click moves a
+     chapter. Planned tasks and per-chapter targets are deliberately preserved.
+     localStorage is origin-wide, so whichever chapter page loads first does the
+     sweep for all 92. */
+  var K_RESET = 'debos.chapters.reset.v2';
+  (function reconcileAll(){
+    try{
+      if (localStorage.getItem(K_RESET) === '1') return;
+      var doomed = [];
+      for (var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        if (k && /^debos\.chapter\..+\.(state|started|history)$/.test(k)) doomed.push(k);
+      }
+      doomed.forEach(function(k){ localStorage.removeItem(k); });
+      /* Derived mirrors — the subject pages only ever read these. */
+      ['physics','chemistry','biology'].forEach(function(s){
+        localStorage.removeItem('debos.' + s + '.progress');
+      });
+      localStorage.setItem(K_RESET, '1');
+    }catch(_){}
+  })();
+
+  /* Belt and braces: this chapter cannot look started without its latch. */
+  (function healThisChapter(){
+    try{
+      if (localStorage.getItem(K_START) === '1') return;
+      localStorage.removeItem(K_STATE);
+      localStorage.removeItem(K_HIST);
+      var pr = readJSON(K_PROG, {});
+      if (pr && Object.prototype.hasOwnProperty.call(pr, CH_SLUG)){
+        delete pr[CH_SLUG]; writeJSON(K_PROG, pr);
+      }
+    }catch(_){}
+  })();
+
   /* ---------------- Stats ---------------- */
   var TARGETS = (function(){
     var t = readJSON(K_TGT, {});
@@ -621,21 +660,18 @@
   }
 
   /* ---------------- Chapter state ---------------- */
-  function getState(){
-    var s = localStorage.getItem(K_STATE);
-    return (s === 'active' || s === 'paused' || s === 'completed') ? s : 'not-started';
-  }
-  /* Start is a one-way latch. Once thrown it stays thrown, so the button can
-     never be pressed a second time — including after a reload.
-     Migration: a chapter already moved off 'not-started' by an earlier build
-     counts as started, so the button isn't offered again retroactively. */
+  /* Start is a one-way latch, and it is the ONLY thing that can put a chapter
+     into play. Once thrown it stays thrown, so the button can never be pressed
+     a second time — including after a reload. A stored run-state without the
+     latch is not trusted: it is treated as stopped and healed below. Nothing
+     implicit — no task, no timer, no earlier build — can start a chapter. */
   function isStarted(){
-    if (localStorage.getItem(K_START) === '1') return true;
-    if (getState() !== 'not-started'){
-      try{ localStorage.setItem(K_START, '1'); }catch(_){}
-      return true;
-    }
-    return false;
+    try{ return localStorage.getItem(K_START) === '1'; }catch(_){ return false; }
+  }
+  function getState(){
+    if (!isStarted()) return 'not-started';
+    var s = localStorage.getItem(K_STATE);
+    return (s === 'active' || s === 'paused' || s === 'completed') ? s : 'active';
   }
   function startChapter(){
     if (isStarted()) return;              /* belt and braces — button is disabled too */
