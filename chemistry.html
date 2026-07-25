@@ -14,19 +14,48 @@
 <meta name="theme-color" content="#060608">
 <title>Chemistry &mdash; DEB OS</title>
 <script>
-  (function(){ try{
+  /* Auth gate — access to any protected page requires a fresh PIN handoff
+     from landing (index.html). The gate is a timestamped token in sessionStorage;
+     it must be less than 3 seconds old, i.e. either just-set by landing on PIN
+     success or just-refreshed by user activity on the previous protected page.
+
+     This means:
+      - Direct URL to command / physics / chemistry / biology → no token, redirect.
+      - Reload / back-forward navigation → treated as fresh entry, token cleared, redirect.
+      - Browser session-restore (Chrome "Continue where you left off") → token
+        timestamp is stale by minutes or hours → redirect to the landing page.
+      - Normal intra-app navigation → activity listeners (below) refresh the
+        token on every click / keydown so the next page's guard passes. */
+  (function(){
     document.documentElement.setAttribute('data-theme','dark');
-    var isReload = false;
+    var pass = false;
     try{
       var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-      if (nav && nav.type === 'reload') isReload = true;
+      var isReload = (nav && (nav.type === 'reload' || nav.type === 'back_forward')) ||
+                     (performance.navigation && performance.navigation.type === 1);
+      if (!isReload){
+        var raw = sessionStorage.getItem('debos.gate');
+        if (raw){
+          var gate = JSON.parse(raw);
+          if (gate && gate.ts && (Date.now() - gate.ts) < 3000) pass = true;
+        }
+      }
     }catch(_){}
-    if (!isReload && performance.navigation && performance.navigation.type === 1) isReload = true;
-    if (isReload) sessionStorage.removeItem('debos.session.unlocked');
-    if (sessionStorage.getItem('debos.session.unlocked') !== '1'){
+    if (!pass){
+      try{ sessionStorage.removeItem('debos.gate'); }catch(__){}
+      try{ sessionStorage.removeItem('debos.session.unlocked'); }catch(__){}
       window.location.replace('index.html');
+      return;
     }
-  }catch(e){} })();
+    /* Access granted — keep the token fresh on any user activity so the next
+       page load (link click, form submit) still passes the guard. */
+    function _bump(){
+      try{ sessionStorage.setItem('debos.gate', JSON.stringify({ts:Date.now()})); }catch(_){}
+    }
+    ['click','keydown','pointerdown','touchstart','wheel'].forEach(function(e){
+      document.addEventListener(e, _bump, {passive:true, capture:true});
+    });
+  })();
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23060608'/%3E%3Cpath d='M28 12 L 28 26 L 20 46 Q 18 54 26 54 L 38 54 Q 46 54 44 46 L 36 26 L 36 12' fill='none' stroke='%2300f5ff' stroke-width='2.5'/%3E%3Cline x1='26' y1='12' x2='38' y2='12' stroke='%2300f5ff' stroke-width='3'/%3E%3Cpath d='M22 44 Q 30 40 42 44 L 44 52 Q 40 54 32 54 L 24 52 Z' fill='%2300f5ff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -461,19 +490,6 @@ var ICON = {
   </div>
 </div>
 <div class="toast" id="toast" aria-live="polite">Task added</div>
-
-
-<!-- ========================= JARVIS voice module =========================
-     Wake word: "Captain" (or "wake up, Captain") -> 6s command window.
-     jarvis-debos.js = DEB OS data-layer adapter (defines window.DEBOS)
-     jarvis.js       = voice engine (Web Speech API, no backend, no AI)
-     Runs only while this tab is open. Chrome recommended.
-     ==================================================================== -->
-<div id="jarvis-indicator" data-corner="bottom-left"></div>
-<script src="jarvis-debos.js"></script>
-<script src="jarvis.js"></script>
-<!-- offline fallback: only wakes up in browsers that block the Web Speech API -->
-<script src="jarvis-offline.js"></script>
 
 </body>
 </html>

@@ -57,6 +57,7 @@
        — the user explicitly wants the animation to replay every time they land here. */
     sessionStorage.removeItem('debos.intro.crossed');
     sessionStorage.removeItem('debos.session.unlocked');
+    sessionStorage.removeItem('debos.gate');
   }catch(e){} })();
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='.6' stop-color='%23000'/%3E%3Cstop offset='.72' stop-color='%2300f5ff'/%3E%3Cstop offset='.88' stop-color='%2300c8d4'/%3E%3Cstop offset='1' stop-color='%23060608'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' fill='%23060608'/%3E%3Ccircle cx='32' cy='32' r='24' fill='url(%23g)'/%3E%3C/svg%3E">
@@ -1019,7 +1020,8 @@
       if (state.pin === actualPin){
         state.unlocked = true;
         LS.set('debos.pin.attempts','0');
-        SS.set('debos.session.unlocked','1');
+        SS.set('debos.gate', JSON.stringify({ts: Date.now()}));
+        SS.set('debos.session.unlocked','1');  /* legacy flag kept; the gate is the source of truth */
         setView('granted');
         /* No auto-forward — user must click the "Enter Command Center" button. */
       } else {
@@ -1069,7 +1071,8 @@
           LS.set('debos.pin.attempts', '0');
           LS.del('debos.pin.lockoutUntil');
           state.unlocked = true;
-          SS.set('debos.session.unlocked','1');
+          SS.set('debos.gate', JSON.stringify({ts: Date.now()}));
+        SS.set('debos.session.unlocked','1');  /* legacy flag kept; the gate is the source of truth */
           setView('granted');
           /* No auto-forward — user must click the "Enter Command Center" button. */
         } else {
@@ -1155,12 +1158,16 @@
     ambientCanvas.style.opacity = '0';
     pinWrap.style.opacity = '0';
     overlay.style.opacity = '0';
-    setTimeout(function(){ window.location.href = CONFIG.NEXT_PAGE; }, t + 40);
+    setTimeout(function(){
+      SS.set('debos.gate', JSON.stringify({ts: Date.now()}));
+      window.location.href = CONFIG.NEXT_PAGE;
+    }, t + 40);
   }
 
   crackBtn.addEventListener('click', function(){
     // Session-unlocked users skip PIN and go straight to Command Center
-    if (SS.get('debos.session.unlocked') === '1'){
+    if (false){
+      /* Skip-PIN path removed: EVERY entry requires the PIN, every single time. */
       proceedToCommand();
     } else {
       openPin();
