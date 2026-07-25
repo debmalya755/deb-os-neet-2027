@@ -159,6 +159,10 @@
   .ctrl-btn:disabled{opacity:.32;cursor:not-allowed}
   .ctrl-btn.is-on{border-color:rgba(var(--unit-rgb),.6);background:rgba(var(--unit-rgb),.14);color:var(--unit-primary);box-shadow:0 0 16px rgba(var(--unit-rgb),.18)}
   .ctrl-btn.pause.is-on{border-color:rgba(201,148,58,.6);background:rgba(201,148,58,.14);color:var(--accent-gold);box-shadow:0 0 16px rgba(201,148,58,.18)}
+  /* While a chapter is stopped, Start is the only live control — make it read that way. */
+  .ctrl-btn.start:not(:disabled){background:linear-gradient(180deg,var(--unit-primary),rgba(var(--unit-rgb),.72));border-color:rgba(var(--unit-rgb),.55);color:#001016;box-shadow:0 4px 16px rgba(var(--unit-rgb),.32)}
+  .ctrl-btn.start:not(:disabled):hover{color:#001016;background:linear-gradient(180deg,var(--unit-primary),rgba(var(--unit-rgb),.8));box-shadow:0 7px 22px rgba(var(--unit-rgb),.46)}
+  .ctrl-btn.start:disabled{opacity:.3}
   .ctrl-btn.done{margin-left:auto}
   .ctrl-btn.done.is-on{border-color:rgba(77,208,160,.6);background:rgba(77,208,160,.14);color:var(--accent-green);box-shadow:0 0 16px rgba(77,208,160,.18)}
   .ctrl-note{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase}
@@ -339,7 +343,7 @@
       <div class="tip" id="tip" aria-hidden="true"></div>
       <div class="trace-empty" id="traceEmpty" hidden>
         <span class="big">No trace yet</span>
-        <span>Plan a task below &mdash; the line starts the day you do</span>
+        <span>Hit Start Chapter &mdash; the line begins the day you do</span>
       </div>
     </div>
     <div class="trace-foot">
@@ -350,6 +354,7 @@
 
   <!-- ============ 2. Control bar ============ -->
   <div class="ctrl-bar" role="group" aria-label="Chapter state controls">
+    <button class="ctrl-btn start" id="btnStart" type="button">Start Chapter</button>
     <button class="ctrl-btn pause" id="btnPause" type="button">Pause Chapter</button>
     <button class="ctrl-btn resume" id="btnResume" type="button">Resume Chapter</button>
     <span class="ctrl-note" id="ctrlNote"></span>
@@ -493,6 +498,7 @@
   var K_STATE   = 'debos.chapter.' + SUBJ_KEY + '.' + CH_SLUG + '.state';
   var K_HIST    = 'debos.chapter.' + SUBJ_KEY + '.' + CH_SLUG + '.history';
   var K_TGT     = 'debos.chapter.' + SUBJ_KEY + '.' + CH_SLUG + '.targets';
+  var K_START   = 'debos.chapter.' + SUBJ_KEY + '.' + CH_SLUG + '.started';
   var K_PROG    = 'debos.' + SUBJ_KEY + '.progress';
 
   /* Which unit types roll up into which view. 'Revision' is new on chapter pages;
@@ -605,8 +611,8 @@
     var last = hist.length ? hist[hist.length - 1] : null;
     if (last && last.d === d){ last.p = pct; }
     else {
-      /* Only start the trace once there is something to trace. */
-      if (!hist.length && pct === 0 && getState() === 'not-started') return hist;
+      /* The trace begins at Start Chapter and nowhere else. */
+      if (!isStarted()) return hist;
       hist.push({ d:d, p:pct });
     }
     if (hist.length > 900) hist = hist.slice(-900);
@@ -619,6 +625,23 @@
     var s = localStorage.getItem(K_STATE);
     return (s === 'active' || s === 'paused' || s === 'completed') ? s : 'not-started';
   }
+  /* Start is a one-way latch. Once thrown it stays thrown, so the button can
+     never be pressed a second time — including after a reload.
+     Migration: a chapter already moved off 'not-started' by an earlier build
+     counts as started, so the button isn't offered again retroactively. */
+  function isStarted(){
+    if (localStorage.getItem(K_START) === '1') return true;
+    if (getState() !== 'not-started'){
+      try{ localStorage.setItem(K_START, '1'); }catch(_){}
+      return true;
+    }
+    return false;
+  }
+  function startChapter(){
+    if (isStarted()) return;              /* belt and braces — button is disabled too */
+    try{ localStorage.setItem(K_START, '1'); }catch(_){}
+    setState('active');
+  }
   function setState(next){
     try{ localStorage.setItem(K_STATE, next); }catch(_){}
     /* Mirror into the subject page's progress map so its stat chips stay honest. */
@@ -630,9 +653,9 @@
     refresh();
   }
 
-  var STATE_TEXT = { 'not-started':'Not started', active:'Active', paused:'Paused', completed:'Completed' };
+  var STATE_TEXT = { 'not-started':'Stopped', active:'Active', paused:'Paused', completed:'Completed' };
   var NOTE_TEXT  = {
-    'not-started':'Resume to put this chapter in play',
+    'not-started':'Stopped — hit Start Chapter to begin',
     active:'In play — timers and tasks counting',
     paused:'Held — nothing counting against you',
     completed:'Study closed — revisions still welcome'
@@ -643,13 +666,20 @@
     document.getElementById('stateBadge').setAttribute('data-s', st);
     document.getElementById('stateText').textContent = STATE_TEXT[st];
     document.getElementById('ctrlNote').textContent = NOTE_TEXT[st];
-    var p = document.getElementById('btnPause'), r = document.getElementById('btnResume'), d = document.getElementById('btnDone');
+    var started = isStarted();
+    var s = document.getElementById('btnStart'), p = document.getElementById('btnPause'),
+        r = document.getElementById('btnResume'), d = document.getElementById('btnDone');
+    s.classList.toggle('is-on', started);
     p.classList.toggle('is-on', st === 'paused');
     r.classList.toggle('is-on', st === 'active');
     d.classList.toggle('is-on', st === 'completed');
-    p.disabled = (st === 'paused' || st === 'not-started' || st === 'completed');
-    r.disabled = (st === 'active');
-    d.disabled = (st === 'completed');
+    /* Stopped chapter: Start is the only way in. Started chapter: Start is spent. */
+    s.disabled = started;
+    p.disabled = (!started || st === 'paused' || st === 'completed');
+    r.disabled = (!started || st === 'active');   /* also reopens a completed chapter */
+    d.disabled = (!started || st === 'completed');
+    s.setAttribute('aria-disabled', String(started));
+    s.title = started ? 'Already started — this chapter is under way' : 'Put this chapter in play';
   }
 
   /* ---------------- Donuts ---------------- */
@@ -946,12 +976,7 @@
     if (next !== 'completed') t.completedAt = null;
     t.status = next;
     saveTask(rec);
-
-    /* First real activity flips a fresh chapter into play automatically. */
-    if (getState() === 'not-started' && (next === 'in-progress' || next === 'completed')){
-      setState('active');
-      return;
-    }
+    /* No auto-start: a chapter only enters play when Start Chapter is pressed. */
     refresh();
   }
 
@@ -987,6 +1012,7 @@
   }
 
   /* ---------------- Wiring ---------------- */
+  document.getElementById('btnStart').addEventListener('click', startChapter);
   document.getElementById('btnPause').addEventListener('click', function(){ setState('paused'); });
   document.getElementById('btnResume').addEventListener('click', function(){ setState('active'); });
   document.getElementById('btnDone').addEventListener('click', function(){ setState('completed'); });
@@ -1069,10 +1095,7 @@
         blowout: false, startedAt: 0, deadline: deadline, completedAt: null
       });
       writeJSON(key, tasks);
-
-      /* Planning work on an untouched chapter puts it in play. */
-      if (getState() === 'not-started'){ setState('active'); }
-
+      /* Planning work does NOT start the chapter — that is Start Chapter's job alone. */
       currentView = bucketOf(fUnit.value);
       ['lectures','dpps','revisions'].forEach(function(o){
         document.getElementById('tab' + cap1(o)).setAttribute('aria-selected', String(o === currentView));
