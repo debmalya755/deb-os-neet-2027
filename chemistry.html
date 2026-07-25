@@ -369,7 +369,7 @@ var ICON = {
       '</div>'+
       '<div class="ch-name">'+ch.name+'</div>'+
       '<div class="ch-open">Open <span aria-hidden="true">&rarr;</span></div>';
-    a.addEventListener('click', function(e){ e.preventDefault(); });
+    /* Chapter pages exist now — the 404 guard is gone; the href navigates. */
     return a;
   }
   var gp=document.getElementById('gridPhysical'), gi=document.getElementById('gridInorganic'), go=document.getElementById('gridOrganic');

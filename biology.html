@@ -777,12 +777,7 @@
       '</div>'+
       '<div class="ch-name">'+ch.name+'</div>'+
       '<div class="ch-open">Open <span aria-hidden="true">&rarr;</span></div>';
-    // Placeholder click behaviour: prevent 404s until chapter pages exist
-    a.addEventListener('click', function(e){
-      e.preventDefault();
-      // Future: navigate to the actual chapter page
-      // window.location.href = a.href;
-    });
+    // Chapter pages exist now — the 404 guard is gone; the href navigates.
     return a;
   }
   function render(){
